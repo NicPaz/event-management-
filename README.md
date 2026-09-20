@@ -58,4 +58,5 @@ npm run build
 Enquanto o diretório não possuir Git, o Pint deve ser executado sem `--dirty`. O progresso registra a única pendência atual do `npm run check` global.
 
 O progresso incremental e as pendências estão em `docs/progresso.md`.
+
 # event-management-

@@ -27,14 +27,27 @@ test('organizers see only their own events', function () {
 
 test('organizers can open their own event', function () {
     $organizer = User::factory()->create();
-    $event = Event::factory()->for($organizer)->create();
+    $event = Event::factory()->for($organizer)->published()->create();
 
     $response = $this->actingAs($organizer)->get(route('events.show', $event));
 
     $response->assertOk()->assertInertia(fn (Assert $page) => $page
         ->component('dashboard/events/show')
         ->where('event.id', $event->id)
+        ->where('event.publicUrl', route('public.events.show', $event->slug))
     );
+});
+
+test('draft event dashboard does not expose a public link', function () {
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+
+    $this->actingAs($organizer)
+        ->get(route('events.show', $event))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('event.publicUrl', null)
+        );
 });
 
 test('organizers are forbidden from opening another organizers event', function () {

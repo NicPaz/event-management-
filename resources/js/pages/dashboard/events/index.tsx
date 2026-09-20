@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -8,7 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { index, show } from '@/routes/events';
+import { create, index, show } from '@/routes/events';
 
 type EventSummary = {
     id: number;
@@ -32,13 +33,18 @@ export default function EventsIndex({ events }: { events: EventSummary[] }) {
             <Head title="Meus eventos" />
 
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Meus eventos
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Cada conta acessa somente os eventos que organiza.
-                    </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            Meus eventos
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                            Cada conta acessa somente os eventos que organiza.
+                        </p>
+                    </div>
+                    <Button asChild>
+                        <Link href={create()}>Criar evento</Link>
+                    </Button>
                 </div>
 
                 {events.length === 0 ? (
@@ -50,8 +56,7 @@ export default function EventsIndex({ events }: { events: EventSummary[] }) {
                                     Você ainda não criou eventos
                                 </p>
                                 <p className="text-muted-foreground text-sm">
-                                    O cadastro de eventos será habilitado no
-                                    próximo incremento.
+                                    Crie seu primeiro rascunho para começar.
                                 </p>
                             </div>
                         </CardContent>
