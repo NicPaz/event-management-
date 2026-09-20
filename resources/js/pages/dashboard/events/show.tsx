@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Check, Copy, Palette } from 'lucide-react';
+import { Check, Copy, Palette, Users } from 'lucide-react';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { edit, index } from '@/routes/events';
+import { index as guestsIndex } from '@/routes/events/guests';
 
 type EventDetails = {
     id: number;
@@ -87,6 +88,11 @@ export default function EventShow({
                                 href={EventAppearanceController.edit(event.id)}
                             >
                                 <Palette /> Personalizar
+                            </Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link href={guestsIndex(event.id)}>
+                                <Users /> Convidados e reservas
                             </Link>
                         </Button>
                         <Button asChild>

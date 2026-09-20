@@ -1,7 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { CalendarCheck, CalendarDays, ShieldAlert, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
+import { index as adminEventsIndex } from '@/routes/admin/events';
+import { index as usersIndex } from '@/routes/admin/users';
 
 type Metrics = {
     organizers: number;
@@ -56,6 +58,37 @@ export default function AdminDashboard({ metrics }: { metrics: Metrics }) {
                             </CardContent>
                         </Card>
                     ))}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Link href={usersIndex()}>
+                        <Card className="hover:bg-muted/50 h-full transition-colors">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Users className="size-5" /> Gerenciar
+                                    organizadores
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-muted-foreground text-sm">
+                                Pesquise contas, confira o total de eventos e
+                                suspenda ou reative o acesso.
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href={adminEventsIndex()}>
+                        <Card className="hover:bg-muted/50 h-full transition-colors">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <CalendarDays className="size-5" />{' '}
+                                    Gerenciar eventos
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-muted-foreground text-sm">
+                                Consulte eventos da plataforma e controle a
+                                disponibilidade das páginas públicas.
+                            </CardContent>
+                        </Card>
+                    </Link>
                 </div>
             </div>
         </>

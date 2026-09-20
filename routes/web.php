@@ -1,9 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\SuspendedEventController as AdminSuspendedEventController;
+use App\Http\Controllers\Admin\SuspendedUserController as AdminSuspendedUserController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ClosedEventController;
 use App\Http\Controllers\EventAppearanceController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventGuestController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftReservationController;
 use App\Http\Controllers\GuestAttendanceController;
@@ -46,11 +51,21 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('dashboard/events/{event}/gifts', [GiftController::class, 'store'])->name('events.gifts.store');
     Route::patch('dashboard/events/{event}/gifts/{gift}', [GiftController::class, 'update'])->name('events.gifts.update');
     Route::delete('dashboard/events/{event}/gifts/{gift}', [GiftController::class, 'destroy'])->name('events.gifts.destroy');
+    Route::get('dashboard/events/{event}/guests', [EventGuestController::class, 'index'])->name('events.guests.index');
+    Route::patch('dashboard/events/{event}/guests/{guest}', [EventGuestController::class, 'update'])
+        ->scopeBindings()
+        ->name('events.guests.update');
     Route::resource('dashboard/events', EventController::class)->names('events');
 });
 
 Route::middleware(['auth', 'active', 'administrator'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::post('users/{user}/suspension', [AdminSuspendedUserController::class, 'store'])->name('users.suspension.store');
+    Route::delete('users/{user}/suspension', [AdminSuspendedUserController::class, 'destroy'])->name('users.suspension.destroy');
+    Route::get('events', [AdminEventController::class, 'index'])->name('events.index');
+    Route::post('events/{event}/suspension', [AdminSuspendedEventController::class, 'store'])->name('events.suspension.store');
+    Route::delete('events/{event}/suspension', [AdminSuspendedEventController::class, 'destroy'])->name('events.suspension.destroy');
 });
 
 require __DIR__.'/settings.php';

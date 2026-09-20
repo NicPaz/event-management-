@@ -5,7 +5,7 @@ Atualizado em 20/09/2026.
 ## Diagnóstico
 
 - Aplicação existente preservada; não foi recriada.
-- Stack efetiva: PHP 8.5, Laravel 13.17+, Inertia 3, React 19, Tailwind CSS 4, Fortify, Wayfinder, SQLite e Pest 5.
+- Stack efetiva: PHP 8.5, Laravel 13.32, Inertia 3, React 19, Tailwind CSS 4, Fortify, Wayfinder, SQLite e Pest 5.
 - Ferramentas locais: Composer 2.8, Laravel Installer 5.32, Node.js 24.13 e npm 11.6.
 - O starter instalado é React/Inertia, portanto ele substitui a sugestão de Livewire do plano.
 - O diretório não possui repositório Git inicializado. Nenhum `git init` foi executado automaticamente.
@@ -60,8 +60,18 @@ Atualizado em 20/09/2026.
     - [x] Área Minha participação permite reservar vários presentes, alterar quantidade e cancelar.
     - [x] Cancelar presença com a opção correspondente cancela também as reservas ativas.
     - [x] Duas reservas concorrentes validadas em processos e conexões separados sobre SQLite persistente isolado.
-- [ ] Etapa 6 — painel operacional e suspensão administrativa.
+- [x] Etapa 6 — painel operacional e suspensão administrativa.
+    - [x] Métricas de titulares confirmados, acompanhantes, total esperado, recusas e unidades reservadas.
+    - [x] Listagem paginada e busca por nome ou telefone limitada ao evento do organizador.
+    - [x] Reservas ativas visíveis por convidado, sem exposição na página pública.
+    - [x] Correção de nome, telefone, presença e acompanhantes com auditoria e revogação da sessão anterior quando a identidade muda.
+    - [x] Administração pesquisável de organizadores e eventos, com suspensão e reativação auditadas.
+    - [x] Suspensão de conta encerra o acesso autenticado; suspensão de evento retira imediatamente a página pública.
 - [ ] Etapa 7 — validação integrada e entrega local.
+    - [x] Seeder local idempotente com evento, aparência, convidados, estados de presença, presentes e reserva fictícios, sem criar credenciais.
+    - [x] README com preparação no Mac, demonstração, substituição dos dados, backup/restauração e checklist de produção sem publicação.
+    - [x] Suíte integrada, análise estática, TypeScript, formatter/linter e build executados.
+    - [ ] Navegação e aparência ainda precisam de inspeção manual em navegador real a 360 px e desktop.
 
 ## Validações executadas
 
@@ -74,13 +84,16 @@ Atualizado em 20/09/2026.
 - Revisão de experiência do editor, página pública e participação: `php artisan test --compact` — 92 testes, 533 asserções, todos aprovados.
 - Fluxo de vitrine e reserva direta de presentes: `php artisan test --compact` — 97 testes, 591 asserções, todos aprovados.
 - Final da Etapa 5 com concorrência multiprocesso: `php artisan test --compact` — 98 testes, 597 asserções, todos aprovados.
+- Final da Etapa 6: `php artisan test --compact` — 107 testes, 690 asserções, todos aprovados.
+- Validação integrada da Etapa 7: `php artisan test --compact` — 108 testes, 701 asserções, todos aprovados.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
-- Checker de formato/lint nos oito arquivos frontend/documentação alterados — aprovado.
+- Checker de formato/lint em 81 arquivos de frontend e documentação em escopo — aprovado.
 - `npm run build` — aprovado; o aviso opcional sobre `fontaine` não impede o build.
 - Rotas CRUD, prévia, publicação, encerramento e reabertura conferidas com `php artisan route:list`.
 - Rotas de aparência, identificação e presença conferidas com `php artisan route:list`.
+- Rotas operacionais de convidados e rotas administrativas de usuários/eventos conferidas com `php artisan route:list`.
 - Migrations locais aplicadas e schemas SQLite de eventos, aparência, convidados e auditoria conferidos após a execução.
 - Link público de armazenamento criado com `php artisan storage:link`.
 
@@ -95,6 +108,9 @@ Atualizado em 20/09/2026.
 - A rota “Minha participação” permanece disponível mesmo quando a seção visual de confirmação está oculta.
 - O proprietário não recebe ações de convidado ao abrir sua própria página pública; o painel oferece personalização e cópia do link publicado.
 - Reservas usam quantidade final, lock compartilhado pelo cache por presente, transação com retentativa e incremento condicional de saldo; a disputa pela última unidade foi validada em processos separados sobre arquivo SQLite real.
+- Correções de identidade feitas pelo organizador incrementam a versão da sessão do convidado e não registram telefone no audit log.
+- A administração não oferece impersonação; contas administrativas não aparecem na lista suspensível de organizadores.
+- A demonstração é criada somente para organizadores existentes em ambiente local/teste, não contém senha fixa e preserva dados anteriores em novas execuções.
 
 ## Pendências conhecidas
 

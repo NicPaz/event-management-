@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, LayoutGrid, ShieldCheck } from 'lucide-react';
+import { CalendarDays, LayoutGrid, ShieldCheck, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { dashboard as adminDashboard } from '@/routes/admin';
+import { index as adminEventsIndex } from '@/routes/admin/events';
+import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as eventsIndex } from '@/routes/events';
 import type { NavItem } from '@/types';
 
@@ -40,6 +42,16 @@ export function AppSidebar() {
             title: 'Administração',
             href: adminDashboard(),
             icon: ShieldCheck,
+        });
+        mainNavItems.push({
+            title: 'Organizadores',
+            href: adminUsersIndex(),
+            icon: Users,
+        });
+        mainNavItems.push({
+            title: 'Eventos da plataforma',
+            href: adminEventsIndex(),
+            icon: CalendarDays,
         });
     }
 
