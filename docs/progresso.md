@@ -84,6 +84,13 @@ Atualizado em 20/09/2026.
     - [x] Navegação principal separada em Visão geral, Eventos, Presentes e Convidados.
     - [x] Áreas de Presentes e Convidados com seletor seguro de evento, seleção automática quando há apenas um e contexto preservado por URL.
     - [x] Isolamento entre organizadores validado também contra manipulação do parâmetro de evento.
+- [x] Etapa 9 — controles de mídia, tipografia e refinamento das áreas operacionais.
+    - [x] Banner e imagem de fundo possuem ações explícitas e independentes de remoção, inclusive para arquivos selecionados ainda não salvos.
+    - [x] Tipografia de títulos e textos é configurável separadamente por uma lista permitida, com amostras, fallbacks e aplicação na prévia, convite público e Minha participação.
+    - [x] A migration preserva a tipografia efetiva dos eventos existentes e os temas mantêm padrões próprios restauráveis.
+    - [x] Convidados são exibidos em tabela no desktop e lista compacta no celular, mantendo busca, paginação, métricas, edição e consulta às reservas.
+    - [x] A seção pública de confirmados usa uma lista simples somente com os nomes dos titulares autorizados.
+    - [x] O cadastro de presente foi movido para modal acessível, com prévia de foto, retenção após validação, confirmação de descarte e bloqueio de envio repetido.
 
 ## Validações executadas
 
@@ -99,6 +106,8 @@ Atualizado em 20/09/2026.
 - Final da Etapa 6: `php artisan test --compact` — 107 testes, 690 asserções, todos aprovados.
 - Validação integrada da Etapa 7: `php artisan test --compact` — 108 testes, 701 asserções, todos aprovados.
 - Validação integrada da Etapa 8: `php artisan test --compact` — 125 testes, 866 asserções, todos aprovados.
+- Testes focados da Etapa 9: 45 testes e 459 asserções, todos aprovados.
+- Validação integrada da Etapa 9: `php artisan test --compact` — 128 testes, 918 asserções, todos aprovados.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
@@ -107,6 +116,9 @@ Atualizado em 20/09/2026.
 - `npm run types:check` — aprovado após as novas telas e tokens visuais.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros após a Etapa 8.
 - `vp check` nos nove arquivos de frontend alterados — aprovado sem avisos ou erros.
+- `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros após a Etapa 9.
+- `vp check` nos nove arquivos de frontend da Etapa 9 — aprovado sem avisos ou erros.
+- `npm run build` — aprovado após a Etapa 9; permanece apenas o aviso opcional já conhecido sobre `fontaine`.
 - Rotas CRUD, prévia, publicação, encerramento e reabertura conferidas com `php artisan route:list`.
 - Rotas de aparência, identificação e presença conferidas com `php artisan route:list`.
 - Rotas operacionais de convidados e rotas administrativas de usuários/eventos conferidas com `php artisan route:list`.
@@ -135,6 +147,9 @@ Atualizado em 20/09/2026.
 - A troca/restauração de tema redefine somente aparência e imagens; seções, dados do evento, presentes, convidados e reservas permanecem intactos.
 - A lista pública de confirmados é consultada e serializada somente quando sua seção está habilitada.
 - O contexto das áreas operacionais usa o identificador do evento na query string, sempre resolvido dentro dos eventos do organizador autenticado.
+- A tipografia pública aceita somente chaves do catálogo da aplicação; não recebe CSS nem URLs externas. Instrument Sans é empacotada pelo build e as demais opções usam pilhas locais com fallbacks genéricos.
+- O modal de cadastro usa o estado do formulário Inertia para preservar valores em erros e uma trava síncrona adicional ao estado de processamento para evitar cliques duplicados.
+- Arquivos de aparência só são excluídos fisicamente quando pertencem à pasta do evento e não estão mais referenciados por nenhum banner ou background.
 
 ## Pendências conhecidas
 

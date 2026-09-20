@@ -45,6 +45,8 @@ export type EventTheme = {
     bannerUrl: string | null;
     bannerPosition: 'top' | 'center' | 'bottom';
     fontPair: string;
+    titleFont: string;
+    bodyFont: string;
     coverLayout: string;
     cardStyle: string;
     buttonStyle: string;
@@ -67,10 +69,19 @@ export type EventThemeOption = {
     accentColor: string;
     borderColor: string;
     fontPair: string;
+    titleFont: string;
+    bodyFont: string;
     coverLayout: string;
     cardStyle: string;
     buttonStyle: string;
     decorationStyle: string;
+};
+
+export type EventFontOption = {
+    value: string;
+    label: string;
+    category: string;
+    sample: string;
 };
 
 export type EventSection = {

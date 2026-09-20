@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\EventSectionType;
 use App\Models\Event;
 use App\Models\EventTheme;
+use App\Support\EventFontCatalog;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,6 +34,8 @@ class UpdateEventAppearanceRequest extends FormRequest
             'background_position' => $this->input('background_position', $theme->background_position),
             'background_overlay' => $this->input('background_overlay', $theme->background_overlay),
             'background_overlay_opacity' => $this->input('background_overlay_opacity', $theme->background_overlay_opacity),
+            'title_font' => $this->input('title_font', $theme->title_font),
+            'body_font' => $this->input('body_font', $theme->body_font),
             'sections' => $sections,
         ]);
     }
@@ -54,12 +57,16 @@ class UpdateEventAppearanceRequest extends FormRequest
      */
     public function rules(): array
     {
+        $fonts = app(EventFontCatalog::class);
+
         return [
             'background_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'surface_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'text_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'border_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'title_font' => ['required', Rule::in($fonts->titleKeys())],
+            'body_font' => ['required', Rule::in($fonts->bodyKeys())],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=4000'],
             'banner_position' => ['required', Rule::in(['top', 'center', 'bottom'])],
             'remove_banner' => ['sometimes', 'boolean'],

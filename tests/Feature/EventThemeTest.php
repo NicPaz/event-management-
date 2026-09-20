@@ -53,6 +53,8 @@ test('event creation applies a theme from the selected category', function () {
 
     $event = Event::query()->sole();
     expect($event->theme()->sole()->template_key)->toBe('housewarming-sage');
+    expect($event->theme()->sole()->title_font)->toBe('organic')
+        ->and($event->theme()->sole()->body_font)->toBe('organic');
 });
 
 test('event creation rejects a theme from another category', function () {
@@ -79,12 +81,14 @@ test('applying a theme preserves operational data and section configuration', fu
         'enabled' => true,
         'position' => 0,
     ]);
-    Storage::disk('public')->put('events/banner.jpg', 'banner');
-    Storage::disk('public')->put('events/background.jpg', 'background');
+    $bannerPath = "events/{$event->id}/banners/banner.jpg";
+    $backgroundPath = "events/{$event->id}/backgrounds/background.jpg";
+    Storage::disk('public')->put($bannerPath, 'banner');
+    Storage::disk('public')->put($backgroundPath, 'background');
     EventTheme::factory()->for($event)->create([
         'template_key' => 'wedding-classic',
-        'banner_path' => 'events/banner.jpg',
-        'background_path' => 'events/background.jpg',
+        'banner_path' => $bannerPath,
+        'background_path' => $backgroundPath,
     ]);
 
     $this->actingAs($organizer)->post(route('events.appearance.theme.update', $event), [
@@ -102,8 +106,8 @@ test('applying a theme preserves operational data and section configuration', fu
         'enabled' => true,
         'position' => 0,
     ]);
-    Storage::disk('public')->assertMissing('events/banner.jpg');
-    Storage::disk('public')->assertMissing('events/background.jpg');
+    Storage::disk('public')->assertMissing($bannerPath);
+    Storage::disk('public')->assertMissing($backgroundPath);
 });
 
 test('confirmed guest names are omitted from public props while the section is disabled', function () {
@@ -135,8 +139,9 @@ test('background image settings are independent from the banner', function () {
     Storage::fake('public');
     $organizer = User::factory()->create();
     $event = Event::factory()->for($organizer)->create();
-    EventTheme::factory()->for($event)->create(['banner_path' => 'events/kept-banner.jpg']);
-    Storage::disk('public')->put('events/kept-banner.jpg', 'banner');
+    $keptBannerPath = "events/{$event->id}/banners/kept-banner.jpg";
+    EventTheme::factory()->for($event)->create(['banner_path' => $keptBannerPath]);
+    Storage::disk('public')->put($keptBannerPath, 'banner');
 
     $this->actingAs($organizer)->post(route('events.appearance.update', $event), themeAppearancePayload([
         'background' => UploadedFile::fake()->image('texture.jpg', 1200, 1200),
@@ -147,11 +152,11 @@ test('background image settings are independent from the banner', function () {
     ]))->assertRedirect()->assertSessionHas('success');
 
     $theme = $event->theme()->sole();
-    expect($theme->banner_path)->toBe('events/kept-banner.jpg')
+    expect($theme->banner_path)->toBe($keptBannerPath)
         ->and($theme->background_path)->not->toBeNull()
         ->and($theme->background_fill)->toBe('repeat')
         ->and($theme->background_overlay_opacity)->toBe(35);
-    Storage::disk('public')->assertExists('events/kept-banner.jpg');
+    Storage::disk('public')->assertExists($keptBannerPath);
     Storage::disk('public')->assertExists($theme->background_path);
 
     $backgroundPath = $theme->background_path;
@@ -160,7 +165,7 @@ test('background image settings are independent from the banner', function () {
     ]))->assertRedirect()->assertSessionHas('success');
 
     expect($theme->refresh()->background_path)->toBeNull()
-        ->and($theme->banner_path)->toBe('events/kept-banner.jpg');
+        ->and($theme->banner_path)->toBe($keptBannerPath);
     Storage::disk('public')->assertMissing($backgroundPath);
-    Storage::disk('public')->assertExists('events/kept-banner.jpg');
+    Storage::disk('public')->assertExists($keptBannerPath);
 });

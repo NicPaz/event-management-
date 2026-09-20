@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Gift } from 'lucide-react';
 import GuestAttendanceController from '@/actions/App/Http/Controllers/GuestAttendanceController';
 import GuestIdentityController from '@/actions/App/Http/Controllers/GuestIdentityController';
 import GiftReservationController from '@/actions/App/Http/Controllers/GiftReservationController';
 import InputError from '@/components/input-error';
+import { fontStack } from '@/lib/event-theme';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -60,16 +61,19 @@ export default function Participation({
         'confirmed' | 'declined' | null
     >(null);
     const [giftToCancel, setGiftToCancel] = useState<ReservedGift | null>(null);
+    const pageStyle: CSSProperties & { '--event-title-font': string } = {
+        '--event-title-font': fontStack(event.theme.titleFont),
+        backgroundColor: event.theme.backgroundColor,
+        color: event.theme.textColor,
+        fontFamily: fontStack(event.theme.bodyFont),
+    };
 
     return (
         <>
             <Head title={`Minha participação — ${event.title}`} />
             <main
-                className="min-h-screen px-4 py-8 sm:py-14"
-                style={{
-                    backgroundColor: event.theme.backgroundColor,
-                    color: event.theme.textColor,
-                }}
+                className="event-typography min-h-screen px-4 py-8 sm:py-14"
+                style={pageStyle}
             >
                 <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
                     <div>

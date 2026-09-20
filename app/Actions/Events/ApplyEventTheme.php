@@ -3,13 +3,16 @@
 namespace App\Actions\Events;
 
 use App\Models\Event;
+use App\Support\EventAssetStorage;
 use App\Support\EventThemeCatalog;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ApplyEventTheme
 {
-    public function __construct(private EventThemeCatalog $catalog) {}
+    public function __construct(
+        private EventThemeCatalog $catalog,
+        private EventAssetStorage $assets,
+    ) {}
 
     public function handle(Event $event, string $themeKey): void
     {
@@ -27,6 +30,8 @@ class ApplyEventTheme
                 'accent_color' => $preset['accentColor'],
                 'border_color' => $preset['borderColor'],
                 'font_pair' => $preset['fontPair'],
+                'title_font' => $preset['titleFont'],
+                'body_font' => $preset['bodyFont'],
                 'cover_layout' => $preset['coverLayout'],
                 'card_style' => $preset['cardStyle'],
                 'button_style' => $preset['buttonStyle'],
@@ -41,6 +46,7 @@ class ApplyEventTheme
             ]);
         });
 
-        Storage::disk('public')->delete(array_filter([$oldBannerPath, $oldBackgroundPath]));
+        $this->assets->deleteIfOwnedAndUnreferenced($event, $oldBannerPath);
+        $this->assets->deleteIfOwnedAndUnreferenced($event, $oldBackgroundPath);
     }
 }

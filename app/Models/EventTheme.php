@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $accent_color
  * @property string $border_color
  * @property string $font_pair
+ * @property string $title_font
+ * @property string $body_font
  * @property string $cover_layout
  * @property string $card_style
  * @property string $button_style
@@ -38,6 +40,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'accent_color',
     'border_color',
     'font_pair',
+    'title_font',
+    'body_font',
     'cover_layout',
     'card_style',
     'button_style',
@@ -64,6 +68,8 @@ class EventTheme extends Model
         'accent_color' => '#88715B',
         'border_color' => '#DFD4C7',
         'font_pair' => 'classic',
+        'title_font' => 'classic',
+        'body_font' => 'modern',
         'cover_layout' => 'centered',
         'card_style' => 'soft',
         'button_style' => 'rounded',

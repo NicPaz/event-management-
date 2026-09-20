@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { Gift, Search, Users } from 'lucide-react';
+import { Gift, Pencil, Search, Users } from 'lucide-react';
 import EventGuestController from '@/actions/App/Http/Controllers/EventGuestController';
 import InputError from '@/components/input-error';
 import { Pagination, type PaginationLink } from '@/components/pagination';
@@ -8,6 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     create,
     index as eventsIndex,
@@ -60,6 +69,7 @@ export default function EventGuests({
     };
     standalone?: boolean;
 }) {
+    const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
     const metricCards = [
         ['Titulares confirmados', metrics.confirmedGuests],
         ['Acompanhantes', metrics.companions],
@@ -219,15 +229,123 @@ export default function EventGuests({
                             </CardContent>
                         </Card>
 
-                        <div className="grid gap-4 xl:grid-cols-2">
-                            {guests.data.map((guest) => (
-                                <GuestCard
-                                    key={guest.id}
-                                    eventId={event.id}
-                                    guest={guest}
-                                />
-                            ))}
-                        </div>
+                        {guests.data.length > 0 && (
+                            <div className="overflow-hidden rounded-xl border">
+                                <table className="hidden w-full table-fixed text-sm md:table">
+                                    <thead className="bg-muted/60 text-left">
+                                        <tr>
+                                            <th className="w-[20%] px-4 py-3 font-medium">
+                                                Nome
+                                            </th>
+                                            <th className="w-[16%] px-4 py-3 font-medium">
+                                                Telefone
+                                            </th>
+                                            <th className="w-[14%] px-4 py-3 font-medium">
+                                                Presença
+                                            </th>
+                                            <th className="w-[12%] px-4 py-3 text-center font-medium">
+                                                Acompanhantes
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                Presentes reservados
+                                            </th>
+                                            <th className="w-24 px-4 py-3 text-right font-medium">
+                                                Ações
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {guests.data.map((guest) => (
+                                            <tr key={guest.id}>
+                                                <td className="truncate px-4 py-3 font-medium">
+                                                    {guest.name}
+                                                </td>
+                                                <td className="text-muted-foreground truncate px-4 py-3">
+                                                    {guest.phone}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <Badge variant="outline">
+                                                        {
+                                                            statusLabels[
+                                                                guest.status
+                                                            ]
+                                                        }
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-4 py-3 text-center tabular-nums">
+                                                    {guest.companionsCount}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <GuestReservations
+                                                        guest={guest}
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() =>
+                                                            setEditingGuest(
+                                                                guest,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil /> Editar
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                <div className="divide-y md:hidden">
+                                    {guests.data.map((guest) => (
+                                        <div
+                                            key={guest.id}
+                                            className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 px-4 py-3"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="truncate font-medium">
+                                                    {guest.name}
+                                                </p>
+                                                <p className="text-muted-foreground truncate text-sm">
+                                                    {guest.phone}
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                aria-label={`Editar ${guest.name}`}
+                                                onClick={() =>
+                                                    setEditingGuest(guest)
+                                                }
+                                            >
+                                                <Pencil />
+                                            </Button>
+                                            <div className="col-span-2 flex flex-wrap items-center gap-2 text-xs">
+                                                <Badge variant="outline">
+                                                    {statusLabels[guest.status]}
+                                                </Badge>
+                                                <span className="text-muted-foreground">
+                                                    {guest.companionsCount}{' '}
+                                                    acompanhante
+                                                    {guest.companionsCount === 1
+                                                        ? ''
+                                                        : 's'}
+                                                </span>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <GuestReservations
+                                                    guest={guest}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {guests.data.length === 0 && (
                             <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
                                 <Users className="size-8" />
@@ -239,6 +357,12 @@ export default function EventGuests({
                             </div>
                         )}
                         <Pagination links={guests.links} />
+
+                        <GuestEditDialog
+                            eventId={event.id}
+                            guest={editingGuest}
+                            onClose={() => setEditingGuest(null)}
+                        />
                     </>
                 )}
             </div>
@@ -246,122 +370,143 @@ export default function EventGuests({
     );
 }
 
-function GuestCard({ eventId, guest }: { eventId: number; guest: Guest }) {
+function GuestReservations({ guest }: { guest: Guest }) {
+    if (guest.reservations.length === 0) {
+        return (
+            <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                <Gift className="size-3.5" /> Nenhum presente reservado
+            </span>
+        );
+    }
+
     return (
-        <Card>
-            <CardHeader className="flex-row items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <CardTitle className="truncate text-lg">
-                        {guest.name}
-                    </CardTitle>
-                    <p className="text-muted-foreground text-sm">
-                        {guest.phone}
-                    </p>
-                </div>
-                <Badge variant="outline">{statusLabels[guest.status]}</Badge>
-            </CardHeader>
-            <CardContent className="grid gap-5">
-                <div>
-                    <p className="mb-2 flex items-center gap-2 text-sm font-medium">
-                        <Gift className="size-4" /> Reservas ativas
-                    </p>
-                    {guest.reservations.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                            {guest.reservations.map((reservation) => (
-                                <Badge
-                                    key={reservation.giftName}
-                                    variant="secondary"
-                                >
-                                    {reservation.giftName} ×{' '}
-                                    {reservation.quantity}
-                                </Badge>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground text-sm">
-                            Nenhum presente reservado.
-                        </p>
-                    )}
-                </div>
-                <Form
-                    action={EventGuestController.update({
-                        event: eventId,
-                        guest: guest.id,
-                    })}
-                    errorBag={`guest-${guest.id}`}
-                    options={{ preserveScroll: true }}
-                >
-                    {({ errors, processing }) => (
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2 sm:col-span-2">
-                                <Label htmlFor={`name-${guest.id}`}>Nome</Label>
-                                <Input
-                                    id={`name-${guest.id}`}
-                                    name="name"
-                                    defaultValue={guest.name}
-                                    required
-                                />
-                                <InputError message={errors.name} />
+        <div className="flex min-w-0 flex-wrap gap-1">
+            {guest.reservations.map((reservation) => (
+                <Badge key={reservation.giftName} variant="secondary">
+                    {reservation.giftName} × {reservation.quantity}
+                </Badge>
+            ))}
+        </div>
+    );
+}
+
+function GuestEditDialog({
+    eventId,
+    guest,
+    onClose,
+}: {
+    eventId: number;
+    guest: Guest | null;
+    onClose: () => void;
+}) {
+    return (
+        <Dialog
+            open={guest !== null}
+            onOpenChange={(open) => !open && onClose()}
+        >
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar convidado</DialogTitle>
+                    <DialogDescription>
+                        Corrija os dados e a situação de presença sem alterar as
+                        reservas ativas.
+                    </DialogDescription>
+                </DialogHeader>
+                {guest && (
+                    <Form
+                        action={EventGuestController.update({
+                            event: eventId,
+                            guest: guest.id,
+                        })}
+                        errorBag={`guest-${guest.id}`}
+                        options={{ preserveScroll: true }}
+                        onSuccess={onClose}
+                    >
+                        {({ errors, processing }) => (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2 sm:col-span-2">
+                                    <Label htmlFor={`name-${guest.id}`}>
+                                        Nome
+                                    </Label>
+                                    <Input
+                                        id={`name-${guest.id}`}
+                                        name="name"
+                                        defaultValue={guest.name}
+                                        required
+                                    />
+                                    <InputError message={errors.name} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor={`phone-${guest.id}`}>
+                                        Telefone
+                                    </Label>
+                                    <Input
+                                        id={`phone-${guest.id}`}
+                                        name="phone"
+                                        defaultValue={guest.phone}
+                                        required
+                                    />
+                                    <InputError message={errors.phone} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor={`status-${guest.id}`}>
+                                        Presença
+                                    </Label>
+                                    <select
+                                        id={`status-${guest.id}`}
+                                        name="status"
+                                        defaultValue={guest.status}
+                                        className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                    >
+                                        <option value="unanswered">
+                                            Sem resposta
+                                        </option>
+                                        <option value="confirmed">
+                                            Confirmado
+                                        </option>
+                                        <option value="declined">
+                                            Não irá
+                                        </option>
+                                    </select>
+                                    <InputError message={errors.status} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor={`companions-${guest.id}`}>
+                                        Acompanhantes
+                                    </Label>
+                                    <Input
+                                        id={`companions-${guest.id}`}
+                                        name="companions_count"
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        defaultValue={guest.companionsCount}
+                                        required
+                                    />
+                                    <InputError
+                                        message={errors.companions_count}
+                                    />
+                                </div>
+                                <DialogFooter className="sm:col-span-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={onClose}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button disabled={processing}>
+                                        {processing
+                                            ? 'Salvando...'
+                                            : 'Salvar correção'}
+                                    </Button>
+                                </DialogFooter>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor={`phone-${guest.id}`}>
-                                    Telefone
-                                </Label>
-                                <Input
-                                    id={`phone-${guest.id}`}
-                                    name="phone"
-                                    defaultValue={guest.phone}
-                                    required
-                                />
-                                <InputError message={errors.phone} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor={`status-${guest.id}`}>
-                                    Presença
-                                </Label>
-                                <select
-                                    id={`status-${guest.id}`}
-                                    name="status"
-                                    defaultValue={guest.status}
-                                    className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
-                                >
-                                    <option value="unanswered">
-                                        Sem resposta
-                                    </option>
-                                    <option value="confirmed">
-                                        Confirmado
-                                    </option>
-                                    <option value="declined">Não irá</option>
-                                </select>
-                                <InputError message={errors.status} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor={`companions-${guest.id}`}>
-                                    Acompanhantes
-                                </Label>
-                                <Input
-                                    id={`companions-${guest.id}`}
-                                    name="companions_count"
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    defaultValue={guest.companionsCount}
-                                    required
-                                />
-                                <InputError message={errors.companions_count} />
-                            </div>
-                            <div className="self-end">
-                                <Button disabled={processing}>
-                                    {processing
-                                        ? 'Salvando...'
-                                        : 'Salvar correção'}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </Form>
-            </CardContent>
-        </Card>
+                        )}
+                    </Form>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }
 

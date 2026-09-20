@@ -28,6 +28,7 @@ export default function ThemePreview({
                     backgroundColor: theme.backgroundColor,
                     backgroundImage: decorationBackground(theme),
                     color: theme.textColor,
+                    fontFamily: fontStack(theme.bodyFont),
                 }}
             >
                 <div
@@ -39,7 +40,7 @@ export default function ThemePreview({
                     </span>
                     <strong
                         className="mt-1 text-xl leading-none"
-                        style={{ fontFamily: fontStack(theme.fontPair) }}
+                        style={{ fontFamily: fontStack(theme.titleFont) }}
                     >
                         Celebração
                     </strong>

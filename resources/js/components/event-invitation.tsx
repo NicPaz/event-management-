@@ -29,6 +29,7 @@ type ThemeStyle = CSSProperties & {
     '--event-border': string;
     '--event-surface': string;
     '--event-text': string;
+    '--event-title-font': string;
 };
 
 type CountdownRemaining = {
@@ -105,7 +106,7 @@ function Countdown({ startsAt }: { startsAt: string | null }) {
                     key={label}
                     className="rounded-2xl border border-(--event-border) bg-(--event-surface) p-4 text-center shadow-sm"
                 >
-                    <strong className="block font-serif text-3xl tabular-nums @min-[640px]:text-4xl">
+                    <strong className="event-title-font block text-3xl tabular-nums @min-[640px]:text-4xl">
                         {String(value).padStart(2, '0')}
                     </strong>
                     <span className="text-xs tracking-wider uppercase opacity-65">
@@ -137,7 +138,8 @@ export default function EventInvitation({
         '--event-border': event.theme.borderColor,
         '--event-surface': event.theme.surfaceColor,
         '--event-text': event.theme.textColor,
-        fontFamily: fontStack(event.theme.fontPair),
+        '--event-title-font': fontStack(event.theme.titleFont),
+        fontFamily: fontStack(event.theme.bodyFont),
         backgroundColor: event.theme.backgroundColor,
         backgroundImage: event.theme.backgroundUrl
             ? `linear-gradient(${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}, ${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}), url(${event.theme.backgroundUrl})`
@@ -424,16 +426,16 @@ export default function EventInvitation({
                 </div>
                 {event.confirmedGuestNames &&
                 event.confirmedGuestNames.length > 0 ? (
-                    <div className="mt-8 flex flex-wrap justify-center gap-3">
+                    <ul className="mx-auto mt-8 max-w-2xl divide-y divide-(--event-border) border-y border-(--event-border)">
                         {event.confirmedGuestNames.map((name, index) => (
-                            <span
+                            <li
                                 key={`${name}-${index}`}
-                                className={`border border-(--event-border) bg-(--event-surface) px-5 py-3 font-medium ${cardClass(event.theme.cardStyle)}`}
+                                className="px-3 py-3 text-center font-medium"
                             >
                                 {name}
-                            </span>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 ) : (
                     <p className="mt-8 text-center text-sm opacity-65">
                         As confirmações aparecerão aqui.
@@ -468,7 +470,7 @@ export default function EventInvitation({
     return (
         <div
             style={themeStyle}
-            className="@container min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text)"
+            className="event-typography @container min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text)"
         >
             {!event.sections.some(
                 (section) => section.type === 'cover' && section.enabled,

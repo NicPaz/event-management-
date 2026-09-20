@@ -43,6 +43,26 @@ test('total quantity cannot be reduced below reserved units', function () {
     expect($gift->refresh()->quantity_total)->toBe(5);
 });
 
+test('gift validation keeps the submitted values for the create modal', function () {
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+
+    $this->actingAs($organizer)->from(route('events.gifts.index', $event))->post(
+        route('events.gifts.store', $event),
+        [
+            'name' => 'Presente ainda preenchido',
+            'description' => 'Descrição preservada no modal',
+            'purchase_url' => 'endereço inválido',
+            'quantity_total' => 0,
+        ],
+    )->assertRedirect(route('events.gifts.index', $event))
+        ->assertSessionHasErrors(['purchase_url', 'quantity_total'])
+        ->assertSessionHasInput('name', 'Presente ainda preenchido')
+        ->assertSessionHasInput('description', 'Descrição preservada no modal');
+
+    $this->assertDatabaseEmpty('gifts');
+});
+
 test('archiving preserves gifts and their reservation history', function () {
     $organizer = User::factory()->create();
     $event = Event::factory()->for($organizer)->create();

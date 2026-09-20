@@ -47,6 +47,10 @@ test('organizers see default appearance for events without customization', funct
         ->component('dashboard/events/appearance')
         ->where('event.theme.backgroundColor', '#FAF7F2')
         ->where('event.theme.bannerUrl', null)
+        ->where('event.theme.titleFont', 'classic')
+        ->where('event.theme.bodyFont', 'modern')
+        ->has('fontOptions.titles', 9)
+        ->has('fontOptions.body', 8)
         ->has('event.sections', 9)
         ->where('event.sections.0.type', 'cover')
         ->where('event.sections.6.type', 'confirmed_guests')
@@ -122,6 +126,45 @@ test('appearance changes persist and are shared by preview and public page', fun
         ->assertInertia($assertInvitation);
 });
 
+test('typography is validated persisted and shared by invitation and participation', function () {
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->published()->create();
+
+    $this->actingAs($organizer)->post(
+        route('events.appearance.update', $event),
+        validAppearancePayload([
+            'title_font' => 'handwritten',
+            'body_font' => 'organic',
+        ]),
+    )->assertRedirect()->assertSessionHas('success');
+
+    $this->assertDatabaseHas('event_themes', [
+        'event_id' => $event->id,
+        'title_font' => 'handwritten',
+        'body_font' => 'organic',
+    ]);
+
+    $assertTypography = fn (Assert $page) => $page
+        ->where('event.theme.titleFont', 'handwritten')
+        ->where('event.theme.bodyFont', 'organic');
+
+    $this->get(route('public.events.show', $event->slug))
+        ->assertOk()
+        ->assertInertia($assertTypography);
+
+    $this->get(route('public.events.participation', $event->slug))
+        ->assertOk()
+        ->assertInertia($assertTypography);
+
+    $this->post(
+        route('events.appearance.update', $event),
+        validAppearancePayload([
+            'title_font' => 'url(https://example.com/font.woff2)',
+            'body_font' => 'handwritten',
+        ]),
+    )->assertSessionHasErrors(['title_font', 'body_font']);
+});
+
 test('organizers cannot change another organizers appearance', function () {
     $organizer = User::factory()->create();
     $otherEvent = Event::factory()->for(User::factory())->create();
@@ -158,9 +201,13 @@ test('banner uploads replace and remove the previous file', function () {
     Storage::fake('public');
     $organizer = User::factory()->create();
     $event = Event::factory()->for($organizer)->create();
-    Storage::disk('public')->put('events/old-banner.jpg', 'old banner');
+    $oldBannerPath = "events/{$event->id}/banners/old-banner.jpg";
+    $keptBackgroundPath = "events/{$event->id}/backgrounds/kept-background.jpg";
+    Storage::disk('public')->put($oldBannerPath, 'old banner');
+    Storage::disk('public')->put($keptBackgroundPath, 'background');
     EventTheme::factory()->for($event)->create([
-        'banner_path' => 'events/old-banner.jpg',
+        'banner_path' => $oldBannerPath,
+        'background_path' => $keptBackgroundPath,
     ]);
 
     $this->actingAs($organizer)->post(
@@ -173,7 +220,7 @@ test('banner uploads replace and remove the previous file', function () {
     $theme = $event->theme()->sole();
     expect($theme->banner_path)->not->toBeNull();
     Storage::disk('public')->assertExists($theme->banner_path);
-    Storage::disk('public')->assertMissing('events/old-banner.jpg');
+    Storage::disk('public')->assertMissing($oldBannerPath);
 
     $this->post(
         route('events.appearance.update', $event),
@@ -181,5 +228,27 @@ test('banner uploads replace and remove the previous file', function () {
     )->assertRedirect();
 
     Storage::disk('public')->assertMissing($theme->banner_path);
-    expect($theme->refresh()->banner_path)->toBeNull();
+    expect($theme->refresh()->banner_path)->toBeNull()
+        ->and($theme->background_path)->toBe($keptBackgroundPath);
+    Storage::disk('public')->assertExists($keptBackgroundPath);
+});
+
+test('removing appearance does not delete an asset referenced by another event', function () {
+    Storage::fake('public');
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+    $otherEvent = Event::factory()->for($organizer)->create();
+    $sharedPath = "events/{$event->id}/backgrounds/shared-texture.jpg";
+    Storage::disk('public')->put($sharedPath, 'shared background');
+    EventTheme::factory()->for($event)->create(['background_path' => $sharedPath]);
+    EventTheme::factory()->for($otherEvent)->create(['background_path' => $sharedPath]);
+
+    $this->actingAs($organizer)->post(
+        route('events.appearance.update', $event),
+        validAppearancePayload(['remove_background' => true]),
+    )->assertRedirect();
+
+    expect($event->theme()->sole()->background_path)->toBeNull()
+        ->and($otherEvent->theme()->sole()->background_path)->toBe($sharedPath);
+    Storage::disk('public')->assertExists($sharedPath);
 });

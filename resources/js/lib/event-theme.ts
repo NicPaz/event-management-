@@ -13,6 +13,8 @@ export const fontStack = (fontPair: string) => {
         retro: 'Cooper Black, Rockwell, Georgia, serif',
         romantic: 'Palatino Linotype, Book Antiqua, Georgia, serif',
         playful: 'Trebuchet MS, ui-rounded, system-ui, sans-serif',
+        handwritten:
+            'Segoe Print, Bradley Hand, Comic Sans MS, ui-rounded, cursive',
     };
 
     return stacks[fontPair] ?? stacks.classic;

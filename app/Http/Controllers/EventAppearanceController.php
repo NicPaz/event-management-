@@ -6,6 +6,7 @@ use App\Actions\Events\GetEventInvitation;
 use App\Actions\Events\UpdateEventAppearance;
 use App\Http\Requests\UpdateEventAppearanceRequest;
 use App\Models\Event;
+use App\Support\EventFontCatalog;
 use App\Support\EventThemeCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -18,12 +19,17 @@ class EventAppearanceController extends Controller
         Event $event,
         GetEventInvitation $invitation,
         EventThemeCatalog $themes,
+        EventFontCatalog $fonts,
     ): Response {
         Gate::authorize('update', $event);
 
         return Inertia::render('dashboard/events/appearance', [
             'event' => $invitation->handle($event),
             'themeOptions' => $themes->forType($event->type),
+            'fontOptions' => [
+                'titles' => $fonts->titleOptions(),
+                'body' => $fonts->bodyOptions(),
+            ],
         ]);
     }
 

@@ -83,10 +83,19 @@ class EventThemeCatalog
         string $buttonStyle,
         string $decorationStyle,
     ): array {
-        return compact(
+        $theme = compact(
             'key', 'name', 'description', 'backgroundColor', 'surfaceColor',
             'textColor', 'accentColor', 'borderColor', 'fontPair', 'coverLayout',
             'cardStyle', 'buttonStyle', 'decorationStyle',
         ) + ['type' => $type->value];
+
+        $theme['titleFont'] = $fontPair;
+        $theme['bodyFont'] = match ($fontPair) {
+            'organic' => 'organic',
+            'playful' => 'playful',
+            default => 'modern',
+        };
+
+        return $theme;
     }
 }

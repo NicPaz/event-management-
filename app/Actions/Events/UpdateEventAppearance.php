@@ -3,6 +3,7 @@
 namespace App\Actions\Events;
 
 use App\Models\Event;
+use App\Support\EventAssetStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,8 @@ use Throwable;
 
 class UpdateEventAppearance
 {
+    public function __construct(private EventAssetStorage $assets) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      */
@@ -41,6 +44,8 @@ class UpdateEventAppearance
                     'text_color' => strtoupper((string) $attributes['text_color']),
                     'accent_color' => strtoupper((string) $attributes['accent_color']),
                     'border_color' => strtoupper((string) $attributes['border_color']),
+                    'title_font' => $attributes['title_font'],
+                    'body_font' => $attributes['body_font'],
                     'banner_position' => $attributes['banner_position'],
                     'background_fill' => $attributes['background_fill'],
                     'background_position' => $attributes['background_position'],
@@ -78,14 +83,14 @@ class UpdateEventAppearance
         $bannerWasRemoved = (bool) ($attributes['remove_banner'] ?? false);
 
         if ($oldBannerPath !== null && ($bannerWasReplaced || $bannerWasRemoved)) {
-            Storage::disk('public')->delete($oldBannerPath);
+            $this->assets->deleteIfOwnedAndUnreferenced($event, $oldBannerPath);
         }
 
         $backgroundWasReplaced = $newBackgroundPath !== null;
         $backgroundWasRemoved = (bool) ($attributes['remove_background'] ?? false);
 
         if ($oldBackgroundPath !== null && ($backgroundWasReplaced || $backgroundWasRemoved)) {
-            Storage::disk('public')->delete($oldBackgroundPath);
+            $this->assets->deleteIfOwnedAndUnreferenced($event, $oldBackgroundPath);
         }
     }
 

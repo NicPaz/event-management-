@@ -15,6 +15,7 @@ import EventThemeController from '@/actions/App/Http/Controllers/EventThemeContr
 import EventInvitation from '@/components/event-invitation';
 import InputError from '@/components/input-error';
 import ThemePreview from '@/components/theme-preview';
+import { fontStack } from '@/lib/event-theme';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -36,6 +37,7 @@ import {
 import { index, show } from '@/routes/events';
 import type {
     EventInvitation as EventInvitationData,
+    EventFontOption,
     EventSection,
     EventThemeOption,
 } from '@/types';
@@ -58,6 +60,8 @@ type AppearanceFormData = {
     text_color: string;
     accent_color: string;
     border_color: string;
+    title_font: string;
+    body_font: string;
     banner: File | null;
     banner_position: 'top' | 'center' | 'bottom';
     remove_banner: boolean;
@@ -102,9 +106,14 @@ function moveItem<T>(items: T[], from: number, to: number): T[] {
 export default function EventAppearance({
     event,
     themeOptions,
+    fontOptions,
 }: {
     event: EventInvitationData;
     themeOptions: EventThemeOption[];
+    fontOptions: {
+        titles: EventFontOption[];
+        body: EventFontOption[];
+    };
 }) {
     const form = useForm<AppearanceFormData>({
         background_color: event.theme.backgroundColor,
@@ -112,6 +121,8 @@ export default function EventAppearance({
         text_color: event.theme.textColor,
         accent_color: event.theme.accentColor,
         border_color: event.theme.borderColor,
+        title_font: event.theme.titleFont,
+        body_font: event.theme.bodyFont,
         banner: null,
         banner_position: event.theme.bannerPosition,
         remove_banner: false,
@@ -144,6 +155,8 @@ export default function EventAppearance({
         ? event.theme.templateKey
         : themeOptions[0]?.key;
     const draggedSection = useRef<number | null>(null);
+    const bannerInput = useRef<HTMLInputElement | null>(null);
+    const backgroundInput = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         if (!form.data.banner) {
@@ -193,6 +206,8 @@ export default function EventAppearance({
             textColor: form.data.text_color,
             accentColor: form.data.accent_color,
             borderColor: form.data.border_color,
+            titleFont: form.data.title_font,
+            bodyFont: form.data.body_font,
             bannerUrl: form.data.remove_banner
                 ? bannerPreview
                 : (bannerPreview ?? event.theme.bannerUrl),
@@ -381,6 +396,40 @@ export default function EventAppearance({
 
                         <Card>
                             <CardHeader>
+                                <CardTitle>Tipografia</CardTitle>
+                                <CardDescription>
+                                    Escolha fontes separadas para títulos e
+                                    textos. As manuscritas são indicadas para
+                                    destaques curtos; os textos longos usam
+                                    opções de leitura confortável.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-6">
+                                <FontChooser
+                                    legend="Títulos e nomes em destaque"
+                                    name="title-font"
+                                    options={fontOptions.titles}
+                                    value={form.data.title_font}
+                                    onChange={(value) =>
+                                        form.setData('title_font', value)
+                                    }
+                                />
+                                <InputError message={form.errors.title_font} />
+                                <FontChooser
+                                    legend="Textos, informações e botões"
+                                    name="body-font"
+                                    options={fontOptions.body}
+                                    value={form.data.body_font}
+                                    onChange={(value) =>
+                                        form.setData('body_font', value)
+                                    }
+                                />
+                                <InputError message={form.errors.body_font} />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
                                 <CardTitle>Imagem de fundo</CardTitle>
                                 <CardDescription>
                                     Independente do banner. A sobreposição
@@ -393,15 +442,20 @@ export default function EventAppearance({
                                     <Label htmlFor="background">Imagem</Label>
                                     <Input
                                         id="background"
+                                        ref={backgroundInput}
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
-                                        onChange={(inputEvent) =>
+                                        onChange={(inputEvent) => {
                                             form.setData(
                                                 'background',
                                                 inputEvent.target.files?.[0] ??
                                                     null,
-                                            )
-                                        }
+                                            );
+                                            form.setData(
+                                                'remove_background',
+                                                false,
+                                            );
+                                        }}
                                     />
                                     <InputError
                                         message={form.errors.background}
@@ -525,23 +579,29 @@ export default function EventAppearance({
                                         />
                                     </div>
                                 </div>
-                                {event.theme.backgroundUrl && (
-                                    <label className="flex items-center gap-3 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={
-                                                form.data.remove_background
+                                {(backgroundPreview ||
+                                    (!form.data.remove_background &&
+                                        event.theme.backgroundUrl)) && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="justify-self-start"
+                                        onClick={() => {
+                                            form.setData('background', null);
+                                            form.setData(
+                                                'remove_background',
+                                                true,
+                                            );
+                                            setBackgroundPreview(null);
+
+                                            if (backgroundInput.current) {
+                                                backgroundInput.current.value =
+                                                    '';
                                             }
-                                            onChange={(inputEvent) =>
-                                                form.setData(
-                                                    'remove_background',
-                                                    inputEvent.target.checked,
-                                                )
-                                            }
-                                            className="accent-primary size-4"
-                                        />
-                                        Remover imagem de fundo atual
-                                    </label>
+                                        }}
+                                    >
+                                        <Trash2 /> Remover imagem de fundo
+                                    </Button>
                                 )}
                             </CardContent>
                         </Card>
@@ -559,15 +619,20 @@ export default function EventAppearance({
                                     <Label htmlFor="banner">Imagem</Label>
                                     <Input
                                         id="banner"
+                                        ref={bannerInput}
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
-                                        onChange={(inputEvent) =>
+                                        onChange={(inputEvent) => {
                                             form.setData(
                                                 'banner',
                                                 inputEvent.target.files?.[0] ??
                                                     null,
-                                            )
-                                        }
+                                            );
+                                            form.setData(
+                                                'remove_banner',
+                                                false,
+                                            );
+                                        }}
                                     />
                                     <InputError message={form.errors.banner} />
                                 </div>
@@ -592,21 +657,25 @@ export default function EventAppearance({
                                         <option value="bottom">Base</option>
                                     </select>
                                 </div>
-                                {event.theme.bannerUrl && (
-                                    <label className="flex items-center gap-3 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={form.data.remove_banner}
-                                            onChange={(inputEvent) =>
-                                                form.setData(
-                                                    'remove_banner',
-                                                    inputEvent.target.checked,
-                                                )
+                                {(bannerPreview ||
+                                    (!form.data.remove_banner &&
+                                        event.theme.bannerUrl)) && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="justify-self-start"
+                                        onClick={() => {
+                                            form.setData('banner', null);
+                                            form.setData('remove_banner', true);
+                                            setBannerPreview(null);
+
+                                            if (bannerInput.current) {
+                                                bannerInput.current.value = '';
                                             }
-                                            className="accent-primary size-4"
-                                        />
-                                        Remover banner atual
-                                    </label>
+                                        }}
+                                    >
+                                        <Trash2 /> Remover banner
+                                    </Button>
                                 )}
                                 {form.progress && (
                                     <progress
@@ -982,6 +1051,55 @@ export default function EventAppearance({
                 </DialogContent>
             </Dialog>
         </>
+    );
+}
+
+function FontChooser({
+    legend,
+    name,
+    options,
+    value,
+    onChange,
+}: {
+    legend: string;
+    name: string;
+    options: EventFontOption[];
+    value: string;
+    onChange: (value: string) => void;
+}) {
+    return (
+        <fieldset className="grid gap-3">
+            <legend className="text-sm font-medium">{legend}</legend>
+            <div className="grid gap-2">
+                {options.map((option) => (
+                    <label
+                        key={option.value}
+                        className={`grid cursor-pointer gap-1 rounded-lg border p-3 transition ${value === option.value ? 'border-primary ring-primary/20 ring-2' : 'hover:bg-muted/50'}`}
+                    >
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                            <input
+                                type="radio"
+                                name={name}
+                                value={option.value}
+                                checked={value === option.value}
+                                onChange={() => onChange(option.value)}
+                                className="accent-primary"
+                            />
+                            {option.label}
+                            <span className="text-muted-foreground ml-auto text-xs font-normal">
+                                {option.category}
+                            </span>
+                        </span>
+                        <span
+                            className="pl-6 text-base"
+                            style={{ fontFamily: fontStack(option.value) }}
+                        >
+                            {option.sample}
+                        </span>
+                    </label>
+                ))}
+            </div>
+        </fieldset>
     );
 }
 

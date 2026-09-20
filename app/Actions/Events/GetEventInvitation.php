@@ -89,6 +89,8 @@ class GetEventInvitation
                     : Storage::disk('public')->url($theme->banner_path),
                 'bannerPosition' => $theme->banner_position,
                 'fontPair' => $theme->font_pair,
+                'titleFont' => $theme->title_font,
+                'bodyFont' => $theme->body_font,
                 'coverLayout' => $theme->cover_layout,
                 'cardStyle' => $theme->card_style,
                 'buttonStyle' => $theme->button_style,

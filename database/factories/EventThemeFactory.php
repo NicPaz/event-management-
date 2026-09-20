@@ -27,6 +27,8 @@ class EventThemeFactory extends Factory
             'accent_color' => '#88715B',
             'border_color' => '#DFD4C7',
             'font_pair' => 'classic',
+            'title_font' => 'classic',
+            'body_font' => 'modern',
             'banner_path' => null,
             'banner_position' => 'center',
         ];
