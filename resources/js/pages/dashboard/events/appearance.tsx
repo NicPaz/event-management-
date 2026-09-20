@@ -27,6 +27,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -62,6 +69,7 @@ type AppearanceFormData = {
     border_color: string;
     title_font: string;
     body_font: string;
+    show_confirmed_guests: boolean;
     banner: File | null;
     banner_position: 'top' | 'center' | 'bottom';
     remove_banner: boolean;
@@ -123,6 +131,7 @@ export default function EventAppearance({
         border_color: event.theme.borderColor,
         title_font: event.theme.titleFont,
         body_font: event.theme.bodyFont,
+        show_confirmed_guests: event.showConfirmedGuests,
         banner: null,
         banner_position: event.theme.bannerPosition,
         remove_banner: false,
@@ -199,6 +208,7 @@ export default function EventAppearance({
 
     const previewEvent: EventInvitationData = {
         ...event,
+        showConfirmedGuests: form.data.show_confirmed_guests,
         theme: {
             ...event.theme,
             backgroundColor: form.data.background_color,
@@ -404,27 +414,27 @@ export default function EventAppearance({
                                     opções de leitura confortável.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-6">
-                                <FontChooser
-                                    legend="Títulos e nomes em destaque"
+                            <CardContent className="grid gap-4 sm:grid-cols-2">
+                                <FontSelect
+                                    label="Títulos e destaques"
                                     name="title-font"
                                     options={fontOptions.titles}
                                     value={form.data.title_font}
                                     onChange={(value) =>
                                         form.setData('title_font', value)
                                     }
+                                    error={form.errors.title_font}
                                 />
-                                <InputError message={form.errors.title_font} />
-                                <FontChooser
-                                    legend="Textos, informações e botões"
+                                <FontSelect
+                                    label="Textos e botões"
                                     name="body-font"
                                     options={fontOptions.body}
                                     value={form.data.body_font}
                                     onChange={(value) =>
                                         form.setData('body_font', value)
                                     }
+                                    error={form.errors.body_font}
                                 />
-                                <InputError message={form.errors.body_font} />
                             </CardContent>
                         </Card>
 
@@ -694,10 +704,8 @@ export default function EventAppearance({
                                 <CardTitle>Seções</CardTitle>
                                 <CardDescription>
                                     Arraste ou use os botões para ordenar. A
-                                    visibilidade não altera permissões futuras.
-                                    Ao ativar “Quem já confirmou”, os nomes dos
-                                    titulares confirmados ficarão públicos no
-                                    convite.
+                                    lista de confirmados é configurada dentro da
+                                    própria confirmação de presença.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-2">
@@ -725,84 +733,125 @@ export default function EventAppearance({
                                                 }
                                                 draggedSection.current = null;
                                             }}
-                                            className="flex items-center gap-2 rounded-lg border p-3"
+                                            className="grid gap-3 rounded-lg border p-3"
                                         >
-                                            <GripVertical
-                                                className="text-muted-foreground size-4 shrink-0 cursor-grab"
-                                                aria-hidden="true"
-                                            />
-                                            <input
-                                                id={`section-${section.type}`}
-                                                type="checkbox"
-                                                checked={section.enabled}
-                                                onChange={(inputEvent) => {
-                                                    const sections = [
-                                                        ...form.data.sections,
-                                                    ];
-                                                    sections[sectionIndex] = {
-                                                        ...section,
-                                                        enabled:
-                                                            inputEvent.target
-                                                                .checked,
-                                                    };
-                                                    form.setData(
-                                                        'sections',
-                                                        sections,
-                                                    );
-                                                }}
-                                                className="accent-primary size-4"
-                                            />
-                                            <Label
-                                                htmlFor={`section-${section.type}`}
-                                                className="min-w-0 flex-1"
-                                            >
-                                                {section.label}
-                                            </Label>
-                                            {section.type ===
-                                                'confirmed_guests' &&
-                                                section.enabled && (
-                                                    <span className="text-[11px] leading-tight text-amber-700">
-                                                        nomes públicos
+                                            <div className="flex items-center gap-2">
+                                                <GripVertical
+                                                    className="text-muted-foreground size-4 shrink-0 cursor-grab"
+                                                    aria-hidden="true"
+                                                />
+                                                <input
+                                                    id={`section-${section.type}`}
+                                                    type="checkbox"
+                                                    checked={section.enabled}
+                                                    onChange={(inputEvent) => {
+                                                        const sections = [
+                                                            ...form.data
+                                                                .sections,
+                                                        ];
+                                                        sections[sectionIndex] =
+                                                            {
+                                                                ...section,
+                                                                enabled:
+                                                                    inputEvent
+                                                                        .target
+                                                                        .checked,
+                                                            };
+                                                        form.setData(
+                                                            'sections',
+                                                            sections,
+                                                        );
+                                                    }}
+                                                    className="accent-primary size-4"
+                                                />
+                                                <Label
+                                                    htmlFor={`section-${section.type}`}
+                                                    className="min-w-0 flex-1"
+                                                >
+                                                    {section.label}
+                                                </Label>
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={
+                                                        sectionIndex === 0
+                                                    }
+                                                    aria-label={`Subir ${section.label}`}
+                                                    onClick={() =>
+                                                        moveSection(
+                                                            sectionIndex,
+                                                            sectionIndex - 1,
+                                                        )
+                                                    }
+                                                >
+                                                    <ArrowUp />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={
+                                                        sectionIndex ===
+                                                        form.data.sections
+                                                            .length -
+                                                            1
+                                                    }
+                                                    aria-label={`Descer ${section.label}`}
+                                                    onClick={() =>
+                                                        moveSection(
+                                                            sectionIndex,
+                                                            sectionIndex + 1,
+                                                        )
+                                                    }
+                                                >
+                                                    <ArrowDown />
+                                                </Button>
+                                            </div>
+                                            {section.type === 'rsvp' && (
+                                                <label className="flex items-start gap-3 border-t pt-3 text-sm">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={
+                                                            form.data
+                                                                .show_confirmed_guests
+                                                        }
+                                                        onChange={(
+                                                            inputEvent,
+                                                        ) =>
+                                                            form.setData(
+                                                                'show_confirmed_guests',
+                                                                inputEvent
+                                                                    .target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                        className="accent-primary mt-0.5 size-4 shrink-0"
+                                                    />
+                                                    <span>
+                                                        <span className="block font-medium">
+                                                            Mostrar lista de
+                                                            confirmados no
+                                                            convite
+                                                        </span>
+                                                        <span className="text-muted-foreground mt-1 block text-xs leading-5">
+                                                            Exibe publicamente
+                                                            apenas os nomes dos
+                                                            titulares. Ao
+                                                            ocultar a seção,
+                                                            esta lista também
+                                                            ficará oculta.
+                                                        </span>
                                                     </span>
-                                                )}
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="ghost"
-                                                disabled={sectionIndex === 0}
-                                                aria-label={`Subir ${section.label}`}
-                                                onClick={() =>
-                                                    moveSection(
-                                                        sectionIndex,
-                                                        sectionIndex - 1,
-                                                    )
-                                                }
-                                            >
-                                                <ArrowUp />
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="ghost"
-                                                disabled={
-                                                    sectionIndex ===
-                                                    form.data.sections.length -
-                                                        1
-                                                }
-                                                aria-label={`Descer ${section.label}`}
-                                                onClick={() =>
-                                                    moveSection(
-                                                        sectionIndex,
-                                                        sectionIndex + 1,
-                                                    )
-                                                }
-                                            >
-                                                <ArrowDown />
-                                            </Button>
+                                                </label>
+                                            )}
                                         </div>
                                     ),
                                 )}
                                 <InputError message={form.errors.sections} />
+                                <InputError
+                                    message={form.errors.show_confirmed_guests}
+                                />
                             </CardContent>
                         </Card>
 
@@ -990,6 +1039,7 @@ export default function EventAppearance({
                                     <EventInvitation
                                         event={previewEvent}
                                         showGuestActions={false}
+                                        participationActionEnabled={false}
                                     />
                                 </div>
                             </CardContent>
@@ -1037,6 +1087,7 @@ export default function EventAppearance({
                                 themeForm.post(
                                     EventThemeController.update(event.id).url,
                                     {
+                                        preserveState: false,
                                         preserveScroll: true,
                                         onSuccess: () => setPendingTheme(null),
                                     },
@@ -1054,52 +1105,46 @@ export default function EventAppearance({
     );
 }
 
-function FontChooser({
-    legend,
+function FontSelect({
+    label,
     name,
     options,
     value,
     onChange,
+    error,
 }: {
-    legend: string;
+    label: string;
     name: string;
     options: EventFontOption[];
     value: string;
     onChange: (value: string) => void;
+    error?: string;
 }) {
     return (
-        <fieldset className="grid gap-3">
-            <legend className="text-sm font-medium">{legend}</legend>
-            <div className="grid gap-2">
-                {options.map((option) => (
-                    <label
-                        key={option.value}
-                        className={`grid cursor-pointer gap-1 rounded-lg border p-3 transition ${value === option.value ? 'border-primary ring-primary/20 ring-2' : 'hover:bg-muted/50'}`}
-                    >
-                        <span className="flex items-center gap-2 text-sm font-medium">
-                            <input
-                                type="radio"
-                                name={name}
-                                value={option.value}
-                                checked={value === option.value}
-                                onChange={() => onChange(option.value)}
-                                className="accent-primary"
-                            />
-                            {option.label}
-                            <span className="text-muted-foreground ml-auto text-xs font-normal">
-                                {option.category}
-                            </span>
-                        </span>
-                        <span
-                            className="pl-6 text-base"
+        <div className="grid gap-2">
+            <Label htmlFor={name}>{label}</Label>
+            <Select value={value} onValueChange={onChange}>
+                <SelectTrigger
+                    id={name}
+                    className="w-full"
+                    style={{ fontFamily: fontStack(value) }}
+                >
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="start">
+                    {options.map((option) => (
+                        <SelectItem
+                            key={option.value}
+                            value={option.value}
                             style={{ fontFamily: fontStack(option.value) }}
                         >
-                            {option.sample}
-                        </span>
-                    </label>
-                ))}
-            </div>
-        </fieldset>
+                            {option.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <InputError message={error} />
+        </div>
     );
 }
 

@@ -121,12 +121,14 @@ function Countdown({ startsAt }: { startsAt: string | null }) {
 export default function EventInvitation({
     event,
     showGuestActions = true,
+    participationActionEnabled = true,
     onGiftSelect,
     reservingGiftId = null,
     giftReservations = {},
 }: {
     event: EventInvitationData;
     showGuestActions?: boolean;
+    participationActionEnabled?: boolean;
     onGiftSelect?: (gift: EventGift) => void;
     reservingGiftId?: number | null;
     giftReservations?: Record<string, number>;
@@ -413,36 +415,6 @@ export default function EventInvitation({
                 )}
             </SectionShell>
         ),
-        confirmed_guests: (
-            <SectionShell>
-                <div className="text-center">
-                    <Users className="mx-auto size-7 text-(--event-accent)" />
-                    <h2 className="mt-4 text-3xl @min-[640px]:text-4xl">
-                        Quem já confirmou
-                    </h2>
-                    <p className="mt-3 text-sm opacity-70">
-                        Pessoas que já confirmaram presença nesta celebração.
-                    </p>
-                </div>
-                {event.confirmedGuestNames &&
-                event.confirmedGuestNames.length > 0 ? (
-                    <ul className="mx-auto mt-8 max-w-2xl divide-y divide-(--event-border) border-y border-(--event-border)">
-                        {event.confirmedGuestNames.map((name, index) => (
-                            <li
-                                key={`${name}-${index}`}
-                                className="px-3 py-3 text-center font-medium"
-                            >
-                                {name}
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="mt-8 text-center text-sm opacity-65">
-                        As confirmações aparecerão aqui.
-                    </p>
-                )}
-            </SectionShell>
-        ),
         instructions: event.instructions ? (
             <SectionShell>
                 <div className="rounded-3xl bg-(--event-accent) px-6 py-10 text-center text-white @min-[640px]:px-10">
@@ -455,13 +427,41 @@ export default function EventInvitation({
         ) : null,
         rsvp: (
             <SectionShell>
-                <div className="rounded-3xl border border-(--event-border) bg-(--event-surface) px-6 py-10 text-center">
+                <div className="rounded-3xl border border-(--event-border) bg-(--event-surface) px-6 py-10 text-center @min-[640px]:px-10">
                     <h2 className="font-serif text-3xl">
                         Confirmação de presença
                     </h2>
                     <p className="mt-3 text-sm opacity-70">
-                        A confirmação de presença estará disponível nesta área.
+                        Confirme sua participação e informe seus acompanhantes.
                     </p>
+                    {event.slug &&
+                        (participationActionEnabled ? (
+                            <Link
+                                href={participation(event.slug)}
+                                className={`mt-6 inline-flex min-h-11 items-center justify-center bg-(--event-accent) px-5 text-sm font-semibold text-white outline-offset-4 hover:brightness-95 focus-visible:outline-2 ${buttonClass(event.theme.buttonStyle)}`}
+                            >
+                                Confirmar presença
+                            </Link>
+                        ) : (
+                            <span
+                                aria-hidden="true"
+                                className={`mt-6 inline-flex min-h-11 items-center justify-center bg-(--event-accent) px-5 text-sm font-semibold text-white ${buttonClass(event.theme.buttonStyle)}`}
+                            >
+                                Confirmar presença
+                            </span>
+                        ))}
+                    {event.showConfirmedGuests &&
+                        event.confirmedGuestNames !== undefined && (
+                            <div className="mt-8 border-t border-(--event-border) pt-8">
+                                <Users className="mx-auto size-6 text-(--event-accent)" />
+                                <h3 className="mt-3 text-2xl">
+                                    Quem já confirmou
+                                </h3>
+                                <ConfirmedGuestNames
+                                    names={event.confirmedGuestNames}
+                                />
+                            </div>
+                        )}
                 </div>
             </SectionShell>
         ),
@@ -498,6 +498,29 @@ export default function EventInvitation({
                 </footer>
             )}
         </div>
+    );
+}
+
+function ConfirmedGuestNames({ names }: { names?: string[] }) {
+    if (!names || names.length === 0) {
+        return (
+            <p className="mt-6 text-center text-sm opacity-65">
+                As confirmações aparecerão aqui.
+            </p>
+        );
+    }
+
+    return (
+        <ul className="mx-auto mt-6 max-w-2xl divide-y divide-(--event-border) border-y border-(--event-border)">
+            {names.map((name, index) => (
+                <li
+                    key={`${name}-${index}`}
+                    className="px-3 py-3 text-center font-medium"
+                >
+                    {name}
+                </li>
+            ))}
+        </ul>
     );
 }
 

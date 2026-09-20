@@ -17,17 +17,6 @@ class UpdateEventAppearanceRequest extends FormRequest
     {
         $event = $this->route('event');
         $theme = $event instanceof Event ? $event->theme()->firstOrNew() : new EventTheme;
-        $sections = $this->input('sections', []);
-
-        if (is_array($sections)
-            && ! collect($sections)->contains(fn (mixed $section): bool => is_array($section)
-                && ($section['type'] ?? null) === EventSectionType::ConfirmedGuests->value)) {
-            $sections[] = [
-                'type' => EventSectionType::ConfirmedGuests->value,
-                'enabled' => false,
-                'position' => count($sections),
-            ];
-        }
 
         $this->merge([
             'background_fill' => $this->input('background_fill', $theme->background_fill),
@@ -36,7 +25,8 @@ class UpdateEventAppearanceRequest extends FormRequest
             'background_overlay_opacity' => $this->input('background_overlay_opacity', $theme->background_overlay_opacity),
             'title_font' => $this->input('title_font', $theme->title_font),
             'body_font' => $this->input('body_font', $theme->body_font),
-            'sections' => $sections,
+            'show_confirmed_guests' => $this->input('show_confirmed_guests', $event instanceof Event ? $event->show_confirmed_guests : false),
+            'sections' => $this->input('sections', []),
         ]);
     }
 
@@ -67,6 +57,7 @@ class UpdateEventAppearanceRequest extends FormRequest
             'border_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'title_font' => ['required', Rule::in($fonts->titleKeys())],
             'body_font' => ['required', Rule::in($fonts->bodyKeys())],
+            'show_confirmed_guests' => ['required', 'boolean'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=4000'],
             'banner_position' => ['required', Rule::in(['top', 'center', 'bottom'])],
             'remove_banner' => ['sometimes', 'boolean'],

@@ -33,6 +33,7 @@ class EventFactory extends Factory
             'instructions' => fake()->paragraph(),
             'status' => EventStatus::Draft,
             'rsvp_open' => true,
+            'show_confirmed_guests' => false,
             'reservations_open' => true,
         ];
     }

@@ -4,7 +4,7 @@ namespace App\Support;
 
 class EventFontCatalog
 {
-    /** @return list<array{value: string, label: string, category: string, sample: string}> */
+    /** @return list<array{value: string, label: string, category: string}> */
     public function titleOptions(): array
     {
         return [
@@ -20,7 +20,7 @@ class EventFontCatalog
         ];
     }
 
-    /** @return list<array{value: string, label: string, category: string, sample: string}> */
+    /** @return list<array{value: string, label: string, category: string}> */
     public function bodyOptions(): array
     {
         return [
@@ -47,14 +47,13 @@ class EventFontCatalog
         return array_column($this->bodyOptions(), 'value');
     }
 
-    /** @return array{value: string, label: string, category: string, sample: string} */
+    /** @return array{value: string, label: string, category: string} */
     private function option(string $value, string $label, string $category): array
     {
         return [
             'value' => $value,
             'label' => $label,
             'category' => $category,
-            'sample' => 'Celebração com você — ação e coração',
         ];
     }
 }

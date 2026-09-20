@@ -7,7 +7,6 @@ export type EventSectionType =
     | 'countdown'
     | 'palette'
     | 'gifts'
-    | 'confirmed_guests'
     | 'instructions'
     | 'rsvp';
 
@@ -81,7 +80,6 @@ export type EventFontOption = {
     value: string;
     label: string;
     category: string;
-    sample: string;
 };
 
 export type EventSection = {
@@ -123,6 +121,7 @@ export type EventInvitation = {
     instructions: string | null;
     mapUrl: string | null;
     isReadOnly: boolean;
+    showConfirmedGuests: boolean;
     theme: EventTheme;
     sections: EventSection[];
     paletteItems: EventPaletteItem[];

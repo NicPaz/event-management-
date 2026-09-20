@@ -146,6 +146,7 @@ export default function PublicEventShow({
                 <EventInvitation
                     event={event}
                     showGuestActions={showGuestActions}
+                    participationActionEnabled={!preview}
                     onGiftSelect={showGuestActions ? selectGift : undefined}
                     reservingGiftId={
                         reservationForm.processing ? checkoutGift?.id : null

@@ -21,6 +21,7 @@ function themeAppearancePayload(array $overrides = []): array
         'text_color' => '#3E352E',
         'accent_color' => '#88715B',
         'border_color' => '#DFD4C7',
+        'show_confirmed_guests' => false,
         'banner_position' => 'center',
         'sections' => collect(EventSectionType::cases())->map(fn (EventSectionType $type, int $position): array => [
             'type' => $type->value,
@@ -73,11 +74,14 @@ test('event creation rejects a theme from another category', function () {
 test('applying a theme preserves operational data and section configuration', function () {
     Storage::fake('public');
     $organizer = User::factory()->create();
-    $event = Event::factory()->for($organizer)->create(['type' => EventType::Wedding]);
+    $event = Event::factory()->for($organizer)->create([
+        'type' => EventType::Wedding,
+        'show_confirmed_guests' => true,
+    ]);
     $gift = Gift::factory()->for($event)->create();
     $guest = EventGuest::factory()->for($event)->confirmed()->create();
     EventSection::factory()->for($event)->create([
-        'type' => EventSectionType::ConfirmedGuests,
+        'type' => EventSectionType::Rsvp,
         'enabled' => true,
         'position' => 0,
     ]);
@@ -102,15 +106,26 @@ test('applying a theme preserves operational data and section configuration', fu
     $this->assertModelExists($guest);
     $this->assertDatabaseHas('event_sections', [
         'event_id' => $event->id,
-        'type' => EventSectionType::ConfirmedGuests->value,
+        'type' => EventSectionType::Rsvp->value,
         'enabled' => true,
         'position' => 0,
     ]);
+    expect($event->refresh()->show_confirmed_guests)->toBeTrue();
     Storage::disk('public')->assertMissing($bannerPath);
     Storage::disk('public')->assertMissing($backgroundPath);
+
+    $this->get(route('events.appearance.edit', $event))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('event.theme.templateKey', 'wedding-boho')
+            ->where('event.theme.backgroundColor', '#F4EADF')
+            ->where('event.theme.textColor', '#44362D')
+            ->where('event.theme.titleFont', 'organic')
+            ->where('event.theme.bodyFont', 'organic')
+        );
 });
 
-test('confirmed guest names are omitted from public props while the section is disabled', function () {
+test('confirmed guest names are sent only when the internal option and rsvp section are enabled', function () {
     $event = Event::factory()->published()->create();
     EventGuest::factory()->for($event)->confirmed()->create(['name' => 'Ana Confirmada']);
     EventGuest::factory()->for($event)->create(['name' => 'Pessoa sem resposta']);
@@ -121,17 +136,26 @@ test('confirmed guest names are omitted from public props while the section is d
             ->missing('event.confirmedGuestNames')
         );
 
-    EventSection::factory()->for($event)->create([
-        'type' => EventSectionType::ConfirmedGuests,
-        'enabled' => true,
-        'position' => 8,
-    ]);
+    $event->update(['show_confirmed_guests' => true]);
 
     $this->get(route('public.events.show', $event->slug))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('event.confirmedGuestNames', ['Ana Confirmada'])
             ->missing('event.guests')
+        );
+
+    EventSection::factory()->for($event)->create([
+        'type' => EventSectionType::Rsvp,
+        'enabled' => false,
+        'position' => 7,
+    ]);
+
+    $this->get(route('public.events.show', $event->slug))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('event.showConfirmedGuests', true)
+            ->missing('event.confirmedGuestNames')
         );
 });
 

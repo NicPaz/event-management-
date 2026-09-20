@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $timezone
  * @property EventStatus $status
  * @property bool $rsvp_open
+ * @property bool $show_confirmed_guests
  * @property bool $reservations_open
  * @property CarbonImmutable|null $published_at
  * @property CarbonImmutable|null $suspended_at
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'longitude',
     'welcome_text',
     'instructions',
+    'show_confirmed_guests',
 ])]
 class Event extends Model
 {
@@ -107,6 +109,7 @@ class Event extends Model
             'starts_at' => 'immutable_datetime',
             'status' => EventStatus::class,
             'rsvp_open' => 'boolean',
+            'show_confirmed_guests' => 'boolean',
             'reservations_open' => 'boolean',
             'published_at' => 'immutable_datetime',
             'suspended_at' => 'immutable_datetime',

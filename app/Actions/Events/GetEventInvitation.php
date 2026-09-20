@@ -77,6 +77,7 @@ class GetEventInvitation
             'instructions' => $event->instructions,
             'mapUrl' => $mapUrl,
             'isReadOnly' => $event->status->value === 'closed',
+            'showConfirmedGuests' => $event->show_confirmed_guests,
             'theme' => [
                 'templateKey' => $theme->template_key,
                 'backgroundColor' => $theme->background_color,
@@ -128,9 +129,11 @@ class GetEventInvitation
                 ->all(),
         ];
 
-        $confirmedSection = collect($sections)->firstWhere('type', EventSectionType::ConfirmedGuests->value);
+        $rsvpSection = collect($sections)->firstWhere('type', EventSectionType::Rsvp->value);
 
-        if (is_array($confirmedSection) && $confirmedSection['enabled'] === true) {
+        if ($event->show_confirmed_guests
+            && is_array($rsvpSection)
+            && $rsvpSection['enabled'] === true) {
             $invitation['confirmedGuestNames'] = $event->guests()
                 ->where('rsvp_status', 'confirmed')
                 ->orderBy('name')

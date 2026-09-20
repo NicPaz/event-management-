@@ -16,6 +16,7 @@ function validAppearancePayload(array $overrides = []): array
         'text_color' => '#3E352E',
         'accent_color' => '#88715B',
         'border_color' => '#DFD4C7',
+        'show_confirmed_guests' => false,
         'banner_position' => 'center',
         'remove_banner' => false,
         'sections' => collect(EventSectionType::cases())
@@ -51,10 +52,11 @@ test('organizers see default appearance for events without customization', funct
         ->where('event.theme.bodyFont', 'modern')
         ->has('fontOptions.titles', 9)
         ->has('fontOptions.body', 8)
-        ->has('event.sections', 9)
+        ->where('event.showConfirmedGuests', false)
+        ->has('event.sections', 8)
         ->where('event.sections.0.type', 'cover')
-        ->where('event.sections.6.type', 'confirmed_guests')
-        ->where('event.sections.6.enabled', false)
+        ->where('event.sections.7.type', 'rsvp')
+        ->where('event.sections.7.enabled', true)
         ->has('event.paletteItems', 0)
     );
 });
@@ -76,6 +78,7 @@ test('appearance changes persist and are shared by preview and public page', fun
         route('events.appearance.update', $event),
         validAppearancePayload([
             'accent_color' => '#6B4F3A',
+            'show_confirmed_guests' => true,
             'sections' => $sections,
             'palette_items' => [
                 [
@@ -99,6 +102,7 @@ test('appearance changes persist and are shared by preview and public page', fun
         'event_id' => $event->id,
         'accent_color' => '#6B4F3A',
     ]);
+    expect($event->refresh()->show_confirmed_guests)->toBeTrue();
     $this->assertDatabaseHas('event_sections', [
         'event_id' => $event->id,
         'type' => EventSectionType::Gifts->value,
@@ -114,6 +118,7 @@ test('appearance changes persist and are shared by preview and public page', fun
     $assertInvitation = fn (Assert $page) => $page
         ->component('events/show')
         ->where('event.theme.accentColor', '#6B4F3A')
+        ->where('event.showConfirmedGuests', true)
         ->where('event.sections.0.type', EventSectionType::Welcome->value)
         ->where('event.sections.1.type', EventSectionType::Cover->value)
         ->where('event.paletteItems.0.label', 'Bambu');

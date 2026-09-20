@@ -78,7 +78,7 @@ Atualizado em 20/09/2026.
     - [x] Troca e restauração do tema no editor mediante confirmação clara do que será substituído.
     - [x] Tipografia, composição de capa, decoração, cartões e botões variam por tema, além das paletas.
     - [x] Banner e background independentes, com upload, substituição, remoção, preenchimento, posição e sobreposição ajustável.
-    - [x] Nova seção ordenável “Quem já confirmou”, desativada por padrão e sem envio dos nomes quando oculta.
+    - [x] Lista pública “Quem já confirmou”, desativada por padrão e sem envio dos nomes quando oculta.
     - [x] “Meus presentes” simplificado para reservas ativas, com foto, quantidade informativa, cancelamento integral confirmado e retorno explícito ao convite.
     - [x] Presentes esgotados aparecem depois dos disponíveis, preservando a ordem de cada grupo, com selo e botão “Já reservado”.
     - [x] Navegação principal separada em Visão geral, Eventos, Presentes e Convidados.
@@ -91,6 +91,14 @@ Atualizado em 20/09/2026.
     - [x] Convidados são exibidos em tabela no desktop e lista compacta no celular, mantendo busca, paginação, métricas, edição e consulta às reservas.
     - [x] A seção pública de confirmados usa uma lista simples somente com os nomes dos titulares autorizados.
     - [x] O cadastro de presente foi movido para modal acessível, com prévia de foto, retenção após validação, confirmação de descarte e bloqueio de envio repetido.
+    - [x] Seletores de tipografia compactados, exibindo somente o nome já renderizado na fonte escolhida.
+    - [x] Aplicação e restauração de temas renovam o estado da prévia para refletir imediatamente cores, background e tipografia persistidos.
+    - [x] A página pública reúne os nomes autorizados de titulares confirmados dentro da área de confirmação de presença.
+- [x] Etapa 10 — unificação da confirmação de presença.
+    - [x] “Quem já confirmou” deixou de ser uma seção independente e passou a ser uma opção interna de “Confirmação de presença”.
+    - [x] A migration transfere a visibilidade anterior sem publicar listas que estavam ocultas, remove a configuração duplicada e preserva a posição relativa da confirmação.
+    - [x] Ocultar a lista mantém a confirmação disponível; ocultar a seção inteira também impede a consulta e o envio público dos nomes.
+    - [x] Prévia e convite publicado renderizam uma única lista simples, apenas com nomes dos titulares confirmados.
 
 ## Validações executadas
 
@@ -107,7 +115,9 @@ Atualizado em 20/09/2026.
 - Validação integrada da Etapa 7: `php artisan test --compact` — 108 testes, 701 asserções, todos aprovados.
 - Validação integrada da Etapa 8: `php artisan test --compact` — 125 testes, 866 asserções, todos aprovados.
 - Testes focados da Etapa 9: 45 testes e 459 asserções, todos aprovados.
-- Validação integrada da Etapa 9: `php artisan test --compact` — 128 testes, 918 asserções, todos aprovados.
+- Validação integrada da Etapa 9: `php artisan test --compact` — 128 testes, 935 asserções, todos aprovados.
+- Testes focados da Etapa 10: 37 testes e 421 asserções, todos aprovados.
+- Validação integrada da Etapa 10: `php artisan test --compact` — 128 testes, 953 asserções, todos aprovados.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
@@ -119,6 +129,8 @@ Atualizado em 20/09/2026.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros após a Etapa 9.
 - `vp check` nos nove arquivos de frontend da Etapa 9 — aprovado sem avisos ou erros.
 - `npm run build` — aprovado após a Etapa 9; permanece apenas o aviso opcional já conhecido sobre `fontaine`.
+- Validação da Etapa 10: Pint, PHPStan, TypeScript, build e `git diff --check` aprovados; migration sem pendências.
+- Convite publicado inspecionado em Chrome com viewport emulado de 360 px e 1440 px: sem overflow horizontal e com exatamente um bloco de confirmação e uma lista de confirmados.
 - Rotas CRUD, prévia, publicação, encerramento e reabertura conferidas com `php artisan route:list`.
 - Rotas de aparência, identificação e presença conferidas com `php artisan route:list`.
 - Rotas operacionais de convidados e rotas administrativas de usuários/eventos conferidas com `php artisan route:list`.
@@ -145,7 +157,7 @@ Atualizado em 20/09/2026.
 - O contador regressivo renderiza marcadores determinísticos durante SSR e começa a calcular após a hidratação, evitando divergência entre servidor e navegador.
 - Os presets dos temas ficam centralizados em um catálogo de domínio; a página pública e os cartões de prévia consomem os mesmos tokens visuais.
 - A troca/restauração de tema redefine somente aparência e imagens; seções, dados do evento, presentes, convidados e reservas permanecem intactos.
-- A lista pública de confirmados é consultada e serializada somente quando sua seção está habilitada.
+- A lista pública de confirmados é consultada e serializada somente quando a opção interna está ativa e a seção “Confirmação de presença” está habilitada.
 - O contexto das áreas operacionais usa o identificador do evento na query string, sempre resolvido dentro dos eventos do organizador autenticado.
 - A tipografia pública aceita somente chaves do catálogo da aplicação; não recebe CSS nem URLs externas. Instrument Sans é empacotada pelo build e as demais opções usam pilhas locais com fallbacks genéricos.
 - O modal de cadastro usa o estado do formulário Inertia para preservar valores em erros e uma trava síncrona adicional ao estado de processamento para evitar cliques duplicados.

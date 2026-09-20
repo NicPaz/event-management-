@@ -1,3 +1,6 @@
+
+
+
 # Celebra — plano de implementação para o Codex
 
 Documento de trabalho • 20/09/2026 • Nome provisório: Celebra
@@ -228,7 +231,7 @@ Aceite: vários presentes por pessoa, saldo correto, cancelamento libera unidade
 
 Resumo de métricas, tabelas de convidados e reservas, busca, correções pelo organizador e suspensão pelo admin.
 
-Aceite: titular/acompanhantes/total separados; organizador vê quem reservou cada presente; dados privados não aparecem para público ou outro organizador. Suspensão revoga acesso efetivo.
+Aceite: titular/acompanhantes/total separados; organizador vê quem reservou Podecada presente; dados privados não aparecem para público ou outro organizador. Suspensão revoga acesso efetivo.
 
 ### Etapa 7 — validação integrada e entrega local
 

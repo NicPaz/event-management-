@@ -66,6 +66,9 @@ class UpdateEventAppearance
                 }
 
                 $event->theme()->updateOrCreate([], $themeAttributes);
+                $event->update([
+                    'show_confirmed_guests' => (bool) $attributes['show_confirmed_guests'],
+                ]);
 
                 $event->sections()->delete();
                 $event->sections()->createMany($this->sectionRecords($attributes['sections'] ?? null));
