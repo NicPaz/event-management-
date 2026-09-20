@@ -47,7 +47,8 @@ class GuestAttendanceController extends Controller
             $attendance->confirm($guest, $status, $request->integer('companions_count'));
         }
 
-        return back()->with('success', 'Sua resposta foi atualizada.');
+        return redirect()->route('public.events.show', $event->slug)
+            ->with('success', 'Sua resposta foi atualizada.');
     }
 
     public function destroy(
@@ -77,6 +78,7 @@ class GuestAttendanceController extends Controller
             $request->string('reservation_handling')->toString(),
         );
 
-        return back()->with('success', 'Presença cancelada.');
+        return redirect()->route('public.events.show', $event->slug)
+            ->with('success', 'Presença cancelada.');
     }
 }

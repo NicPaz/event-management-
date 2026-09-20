@@ -19,6 +19,7 @@ test('draft events are private but owners can preview them', function () {
             ->where('preview', true)
             ->where('canCustomize', true)
             ->where('showGuestActions', false)
+            ->where('guest', null)
             ->where('event.title', $event->title)
         );
 });
@@ -69,6 +70,7 @@ test('published events receive a stable slug and become public', function () {
             ->where('preview', false)
             ->where('canCustomize', false)
             ->where('showGuestActions', true)
+            ->where('guest', null)
             ->where('event.title', 'Celebração da Ana')
             ->missing('event.user')
             ->missing('event.user_id')

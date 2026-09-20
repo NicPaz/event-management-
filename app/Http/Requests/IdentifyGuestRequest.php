@@ -3,8 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Actions\Guests\NormalizeGuestIdentity;
+use App\Models\Event;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class IdentifyGuestRequest extends FormRequest
@@ -24,9 +27,20 @@ class IdentifyGuestRequest extends FormRequest
      */
     public function rules(): array
     {
+        $event = $this->route('event');
+
         return [
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:24'],
+            'gift_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('gifts', 'id')->where(
+                    fn (Builder $query): Builder => $query
+                        ->where('event_id', $event instanceof Event ? $event->id : 0)
+                        ->whereNull('archived_at'),
+                ),
+            ],
         ];
     }
 

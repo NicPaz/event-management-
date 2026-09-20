@@ -10,6 +10,7 @@ import {
     Palette,
 } from 'lucide-react';
 import type {
+    EventGift,
     EventInvitation as EventInvitationData,
     EventSectionType,
 } from '@/types';
@@ -25,7 +26,7 @@ type ThemeStyle = CSSProperties & {
 
 function SectionShell({ children }: { children: ReactNode }) {
     return (
-        <section className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
+        <section className="mx-auto w-full max-w-5xl px-5 py-10 @min-[640px]:px-8 @min-[640px]:py-14">
             {children}
         </section>
     );
@@ -70,13 +71,13 @@ function Countdown({ startsAt }: { startsAt: string | null }) {
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 @min-[640px]:grid-cols-4">
             {values.map(([label, value]) => (
                 <div
                     key={label}
                     className="rounded-2xl border border-(--event-border) bg-(--event-surface) p-4 text-center shadow-sm"
                 >
-                    <strong className="block font-serif text-3xl tabular-nums sm:text-4xl">
+                    <strong className="block font-serif text-3xl tabular-nums @min-[640px]:text-4xl">
                         {String(value).padStart(2, '0')}
                     </strong>
                     <span className="text-xs tracking-wider uppercase opacity-65">
@@ -91,9 +92,15 @@ function Countdown({ startsAt }: { startsAt: string | null }) {
 export default function EventInvitation({
     event,
     showGuestActions = true,
+    onGiftSelect,
+    reservingGiftId = null,
+    giftReservations = {},
 }: {
     event: EventInvitationData;
     showGuestActions?: boolean;
+    onGiftSelect?: (gift: EventGift) => void;
+    reservingGiftId?: number | null;
+    giftReservations?: Record<string, number>;
 }) {
     const date = event.startsAt ? new Date(event.startsAt) : null;
     const themeStyle: ThemeStyle = {
@@ -129,7 +136,7 @@ export default function EventInvitation({
                     <span className="text-xs font-semibold tracking-[0.3em] uppercase">
                         Você está convidado
                     </span>
-                    <h1 className="font-serif text-5xl leading-tight text-balance sm:text-7xl">
+                    <h1 className="font-serif text-5xl leading-tight text-balance @min-[640px]:text-7xl">
                         {event.title}
                     </h1>
                 </div>
@@ -139,10 +146,10 @@ export default function EventInvitation({
             <SectionShell>
                 <div className="mx-auto max-w-3xl text-center">
                     <Heart className="mx-auto size-7 text-(--event-accent)" />
-                    <h2 className="mt-4 font-serif text-3xl sm:text-4xl">
+                    <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
                         Boas-vindas
                     </h2>
-                    <p className="mt-5 text-base leading-8 whitespace-pre-line opacity-75 sm:text-lg">
+                    <p className="mt-5 text-base leading-8 whitespace-pre-line opacity-75 @min-[640px]:text-lg">
                         {event.welcomeText}
                     </p>
                 </div>
@@ -150,10 +157,10 @@ export default function EventInvitation({
         ) : null,
         information: (
             <SectionShell>
-                <h2 className="mb-8 text-center font-serif text-3xl sm:text-4xl">
+                <h2 className="mb-8 text-center font-serif text-3xl @min-[640px]:text-4xl">
                     Informações do evento
                 </h2>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 @min-[768px]:grid-cols-3">
                     <InformationCard icon={<CalendarDays />} title="Data">
                         {date
                             ? new Intl.DateTimeFormat('pt-BR', {
@@ -192,7 +199,7 @@ export default function EventInvitation({
         ),
         countdown: (
             <SectionShell>
-                <h2 className="mb-8 text-center font-serif text-3xl sm:text-4xl">
+                <h2 className="mb-8 text-center font-serif text-3xl @min-[640px]:text-4xl">
                     Contagem regressiva
                 </h2>
                 <Countdown startsAt={event.startsAt} />
@@ -202,7 +209,7 @@ export default function EventInvitation({
             <SectionShell>
                 <div className="text-center">
                     <Palette className="mx-auto size-7 text-(--event-accent)" />
-                    <h2 className="mt-4 font-serif text-3xl sm:text-4xl">
+                    <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
                         Paleta da casa
                     </h2>
                     <p className="mt-3 text-sm opacity-70">
@@ -210,7 +217,7 @@ export default function EventInvitation({
                     </p>
                 </div>
                 {event.paletteItems.length > 0 ? (
-                    <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="mt-8 grid grid-cols-2 gap-3 @min-[640px]:grid-cols-4">
                         {event.paletteItems.map((item) => (
                             <div
                                 key={`${item.position}-${item.label}`}
@@ -252,12 +259,12 @@ export default function EventInvitation({
                     </p>
                 </div>
                 {event.gifts.length > 0 ? (
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="mt-8 grid gap-4 @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3">
                         {event.gifts.map((gift) => (
                             <article
                                 key={gift.id}
                                 id={`presente-${gift.id}`}
-                                className="overflow-hidden rounded-2xl border border-(--event-border) bg-(--event-surface)"
+                                className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-(--event-border) bg-(--event-surface)"
                             >
                                 {gift.imageUrl && (
                                     <img
@@ -266,7 +273,7 @@ export default function EventInvitation({
                                         className="aspect-[4/3] w-full object-cover"
                                     />
                                 )}
-                                <div className="p-5">
+                                <div className="flex min-w-0 flex-1 flex-col p-5">
                                     <h3 className="font-serif text-xl">
                                         {gift.name}
                                     </h3>
@@ -280,22 +287,36 @@ export default function EventInvitation({
                                             ? `${gift.quantityAvailable} de ${gift.quantityTotal} unidades disponíveis`
                                             : 'Todos reservados'}
                                     </p>
-                                    <div className="mt-5 grid grid-cols-2 gap-2">
+                                    {giftReservations[String(gift.id)] && (
+                                        <p className="mt-2 text-sm text-emerald-700">
+                                            Você escolheu{' '}
+                                            {giftReservations[String(gift.id)]}{' '}
+                                            {giftReservations[
+                                                String(gift.id)
+                                            ] === 1
+                                                ? 'unidade'
+                                                : 'unidades'}
+                                        </p>
+                                    )}
+                                    <div className="mt-auto grid gap-2 pt-5 @min-[420px]:grid-cols-2">
                                         {event.slug &&
                                         showGuestActions &&
-                                        gift.quantityAvailable > 0 ? (
-                                            <Link
-                                                href={`${
-                                                    participation(event.slug, {
-                                                        query: {
-                                                            gift: gift.id,
-                                                        },
-                                                    }).url
-                                                }#presente-${gift.id}`}
+                                        gift.quantityAvailable > 0 &&
+                                        onGiftSelect ? (
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    reservingGiftId !== null
+                                                }
+                                                onClick={() =>
+                                                    onGiftSelect(gift)
+                                                }
                                                 className="inline-flex min-h-11 items-center justify-center rounded-lg bg-(--event-accent) px-3 text-center text-sm font-semibold text-white outline-offset-2 hover:brightness-95 focus-visible:outline-2"
                                             >
-                                                Presentear
-                                            </Link>
+                                                {reservingGiftId === gift.id
+                                                    ? 'Reservando...'
+                                                    : 'Presentear'}
+                                            </button>
                                         ) : (
                                             <span
                                                 aria-disabled="true"
@@ -336,7 +357,7 @@ export default function EventInvitation({
         ),
         instructions: event.instructions ? (
             <SectionShell>
-                <div className="rounded-3xl bg-(--event-accent) px-6 py-10 text-center text-white sm:px-10">
+                <div className="rounded-3xl bg-(--event-accent) px-6 py-10 text-center text-white @min-[640px]:px-10">
                     <h2 className="font-serif text-3xl">Orientações</h2>
                     <p className="mt-4 leading-7 whitespace-pre-line text-white/85">
                         {event.instructions}
@@ -361,7 +382,7 @@ export default function EventInvitation({
     return (
         <div
             style={themeStyle}
-            className="min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text)"
+            className="@container min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text)"
         >
             {!event.sections.some(
                 (section) => section.type === 'cover' && section.enabled,

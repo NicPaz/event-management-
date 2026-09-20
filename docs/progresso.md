@@ -37,15 +37,17 @@ Atualizado em 20/09/2026.
     - [x] Paleta da casa independente do tema, com cores e materiais.
     - [x] Componente compartilhado entre prévia, editor e página pública.
     - [x] Editor visual em tela cheia, com controles laterais, prévia responsiva ao vivo e acesso direto pelo painel do evento.
+    - [x] Prévia interna baseada na largura real do dispositivo, evitando grids de desktop comprimidos no modo mobile.
 - [x] Etapa 4 — convidados, identificação e presença.
     - [x] Nome e telefone brasileiro normalizados sem OTP e sem correspondência aproximada.
     - [x] Acesso em sessão regenerada, escopado por evento e revogável por versão.
     - [x] Rate limit por IP/evento e identificador derivado do telefone.
     - [x] Confirmação, recusa, acompanhantes e cancelamento com escolha explícita sobre reservas.
     - [x] Fluxo de resposta reorganizado em duas escolhas claras: confirmar com acompanhantes ou informar ausência decidindo sobre os presentes.
+    - [x] Após confirmar ou recusar presença, o convidado retorna ao convite público do evento.
     - [x] Métricas de confirmados, acompanhantes e total esperado no painel.
     - [x] Audit log mínimo para alterações de presença.
-- [ ] Etapa 5 — presentes e reservas transacionais (em andamento).
+- [x] Etapa 5 — presentes e reservas transacionais.
     - [x] Cadastro manual com descrição, imagem, link HTTP/HTTPS e quantidade total.
     - [x] Arquivamento preserva item e histórico; total não pode ficar abaixo do reservado.
     - [x] Reserva recebe quantidade final, é idempotente e mantém contador e histórico na mesma transação.
@@ -53,9 +55,11 @@ Atualizado em 20/09/2026.
     - [x] Cancelamento repetido não libera unidades duas vezes.
     - [x] Página pública exibe unidades totais, reservadas/disponíveis sem identificar convidados.
     - [x] Cada presente oferece as ações “Presentear” e “Sugestão de compra”.
+    - [x] Reserva direta pela vitrine: reutiliza a identificação da sessão ou solicita somente nome e telefone quando necessário.
+    - [x] Confirmação de reserva em modal, com ações para continuar escolhendo ou consultar os presentes reservados.
     - [x] Área Minha participação permite reservar vários presentes, alterar quantidade e cancelar.
     - [x] Cancelar presença com a opção correspondente cancela também as reservas ativas.
-    - [ ] Teste de duas reservas realmente concorrentes em processos/conexões separados sobre banco persistente.
+    - [x] Duas reservas concorrentes validadas em processos e conexões separados sobre SQLite persistente isolado.
 - [ ] Etapa 6 — painel operacional e suspensão administrativa.
 - [ ] Etapa 7 — validação integrada e entrega local.
 
@@ -68,6 +72,8 @@ Atualizado em 20/09/2026.
 - Final das Etapas 3 e 4: `php artisan test --compact` — 82 testes, 473 asserções, todos aprovados.
 - Incremento funcional da Etapa 5: `php artisan test --compact` — 89 testes, 496 asserções, todos aprovados.
 - Revisão de experiência do editor, página pública e participação: `php artisan test --compact` — 92 testes, 533 asserções, todos aprovados.
+- Fluxo de vitrine e reserva direta de presentes: `php artisan test --compact` — 97 testes, 591 asserções, todos aprovados.
+- Final da Etapa 5 com concorrência multiprocesso: `php artisan test --compact` — 98 testes, 597 asserções, todos aprovados.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
@@ -88,11 +94,10 @@ Atualizado em 20/09/2026.
 - Cores do tema são valores hexadecimais validados e o texto exige contraste mínimo de 4,5:1 sobre fundo e superfície.
 - A rota “Minha participação” permanece disponível mesmo quando a seção visual de confirmação está oculta.
 - O proprietário não recebe ações de convidado ao abrir sua própria página pública; o painel oferece personalização e cópia do link publicado.
-- Reservas usam quantidade final, lock compartilhado pelo cache por presente, transação com retentativa e incremento condicional de saldo; o teste multiprocesso continua obrigatório antes de afirmar garantia de concorrência no banco alvo.
+- Reservas usam quantidade final, lock compartilhado pelo cache por presente, transação com retentativa e incremento condicional de saldo; a disputa pela última unidade foi validada em processos separados sobre arquivo SQLite real.
 
 ## Pendências conhecidas
 
 - O envio de recuperação de senha permanece no driver de log; não representa entrega real de e-mail.
-- A concorrência real de reservas só poderá ser validada após a Etapa 5.
 - A verificação visual manual em navegador real nas larguras de 360 px e desktop ainda precisa ser executada na Etapa 7; o editor já oferece ambos os modos de prévia sem rolagem horizontal intencional.
 - O `npm run check` global ainda aponta apenas a formatação preexistente de `PLANO_PROJETO_LARAVEL.md`; o conteúdo do plano foi preservado.
