@@ -67,11 +67,11 @@ Atualizado em 20/09/2026.
     - [x] Correção de nome, telefone, presença e acompanhantes com auditoria e revogação da sessão anterior quando a identidade muda.
     - [x] Administração pesquisável de organizadores e eventos, com suspensão e reativação auditadas.
     - [x] Suspensão de conta encerra o acesso autenticado; suspensão de evento retira imediatamente a página pública.
-- [ ] Etapa 7 — validação integrada e entrega local.
+- [x] Etapa 7 — validação integrada e entrega local.
     - [x] Seeder local idempotente com evento, aparência, convidados, estados de presença, presentes e reserva fictícios, sem criar credenciais.
     - [x] README com preparação no Mac, demonstração, substituição dos dados, backup/restauração e checklist de produção sem publicação.
     - [x] Suíte integrada, análise estática, TypeScript, formatter/linter e build executados.
-    - [ ] Navegação e aparência ainda precisam de inspeção manual em navegador real a 360 px e desktop.
+    - [x] Navegação, aparência, editor e fluxos de convidado inspecionados em Chrome real a 360 px e 1440 px.
 
 ## Validações executadas
 
@@ -96,6 +96,9 @@ Atualizado em 20/09/2026.
 - Rotas operacionais de convidados e rotas administrativas de usuários/eventos conferidas com `php artisan route:list`.
 - Migrations locais aplicadas e schemas SQLite de eventos, aparência, convidados e auditoria conferidos após a execução.
 - Link público de armazenamento criado com `php artisan storage:link`.
+- Navegação validada em Chrome headless real com banco temporário isolado: página pública, painel do evento, editor desktop/mobile, convidados, participação, reserva completa e administração.
+- Todas as páginas verificadas em 360 px permaneceram sem rolagem horizontal; os cards da prévia mobile e os modais foram conferidos visualmente.
+- A inspeção encontrou e permitiu corrigir a hidratação SSR do contador e o corte do card administrativo de evento no mobile.
 
 ## Decisões de implementação
 
@@ -111,9 +114,9 @@ Atualizado em 20/09/2026.
 - Correções de identidade feitas pelo organizador incrementam a versão da sessão do convidado e não registram telefone no audit log.
 - A administração não oferece impersonação; contas administrativas não aparecem na lista suspensível de organizadores.
 - A demonstração é criada somente para organizadores existentes em ambiente local/teste, não contém senha fixa e preserva dados anteriores em novas execuções.
+- O contador regressivo renderiza marcadores determinísticos durante SSR e começa a calcular após a hidratação, evitando divergência entre servidor e navegador.
 
 ## Pendências conhecidas
 
 - O envio de recuperação de senha permanece no driver de log; não representa entrega real de e-mail.
-- A verificação visual manual em navegador real nas larguras de 360 px e desktop ainda precisa ser executada na Etapa 7; o editor já oferece ambos os modos de prévia sem rolagem horizontal intencional.
 - O `npm run check` global ainda aponta apenas a formatação preexistente de `PLANO_PROJETO_LARAVEL.md`; o conteúdo do plano foi preservado.

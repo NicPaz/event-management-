@@ -392,7 +392,10 @@ export default function Participation({
                                                     </h3>
                                                     <p className="text-muted-foreground text-sm">
                                                         {gift.quantityAvailable}{' '}
-                                                        unidades disponíveis
+                                                        {gift.quantityAvailable ===
+                                                        1
+                                                            ? 'unidade disponível'
+                                                            : 'unidades disponíveis'}
                                                         {reservation
                                                             ? ` · você reservou ${reservation.quantity}`
                                                             : ''}

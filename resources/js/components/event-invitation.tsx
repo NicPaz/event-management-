@@ -24,6 +24,24 @@ type ThemeStyle = CSSProperties & {
     '--event-text': string;
 };
 
+type CountdownRemaining = {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+};
+
+function calculateCountdown(startsAt: string): CountdownRemaining {
+    const difference = Math.max(0, new Date(startsAt).getTime() - Date.now());
+
+    return {
+        days: Math.floor(difference / 86_400_000),
+        hours: Math.floor((difference / 3_600_000) % 24),
+        minutes: Math.floor((difference / 60_000) % 60),
+        seconds: Math.floor((difference / 1_000) % 60),
+    };
+}
+
 function SectionShell({ children }: { children: ReactNode }) {
     return (
         <section className="mx-auto w-full max-w-5xl px-5 py-10 @min-[640px]:px-8 @min-[640px]:py-14">
@@ -33,26 +51,19 @@ function SectionShell({ children }: { children: ReactNode }) {
 }
 
 function Countdown({ startsAt }: { startsAt: string | null }) {
-    const calculateRemaining = () => {
-        const difference = startsAt
-            ? Math.max(0, new Date(startsAt).getTime() - Date.now())
-            : 0;
-
-        return {
-            days: Math.floor(difference / 86_400_000),
-            hours: Math.floor((difference / 3_600_000) % 24),
-            minutes: Math.floor((difference / 60_000) % 60),
-            seconds: Math.floor((difference / 1_000) % 60),
-        };
-    };
-
-    const [remaining, setRemaining] = useState(calculateRemaining);
+    const [remaining, setRemaining] = useState<CountdownRemaining | null>(null);
 
     useEffect(() => {
-        const timer = window.setInterval(
-            () => setRemaining(calculateRemaining()),
-            1_000,
-        );
+        if (!startsAt) {
+            setRemaining(null);
+
+            return;
+        }
+
+        const updateCountdown = () =>
+            setRemaining(calculateCountdown(startsAt));
+        updateCountdown();
+        const timer = window.setInterval(updateCountdown, 1_000);
 
         return () => window.clearInterval(timer);
     }, [startsAt]);
@@ -63,12 +74,19 @@ function Countdown({ startsAt }: { startsAt: string | null }) {
         );
     }
 
-    const values = [
-        ['Dias', remaining.days],
-        ['Horas', remaining.hours],
-        ['Minutos', remaining.minutes],
-        ['Segundos', remaining.seconds],
-    ];
+    const values = remaining
+        ? [
+              ['Dias', remaining.days],
+              ['Horas', remaining.hours],
+              ['Minutos', remaining.minutes],
+              ['Segundos', remaining.seconds],
+          ]
+        : [
+              ['Dias', '--'],
+              ['Horas', '--'],
+              ['Minutos', '--'],
+              ['Segundos', '--'],
+          ];
 
     return (
         <div className="grid grid-cols-2 gap-3 @min-[640px]:grid-cols-4">
@@ -284,7 +302,7 @@ export default function EventInvitation({
                                     )}
                                     <p className="mt-4 text-sm font-semibold">
                                         {gift.quantityAvailable > 0
-                                            ? `${gift.quantityAvailable} de ${gift.quantityTotal} unidades disponíveis`
+                                            ? `${gift.quantityAvailable} ${gift.quantityAvailable === 1 ? 'unidade disponível' : 'unidades disponíveis'} de ${gift.quantityTotal}`
                                             : 'Todos reservados'}
                                     </p>
                                     {giftReservations[String(gift.id)] && (

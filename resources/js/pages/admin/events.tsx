@@ -75,18 +75,18 @@ export default function AdminEvents({
 
                 <div className="grid gap-4 lg:grid-cols-2">
                     {events.data.map((event) => (
-                        <Card key={event.id}>
-                            <CardHeader className="flex-row items-start justify-between gap-3">
+                        <Card key={event.id} className="min-w-0">
+                            <CardHeader className="flex-col items-start justify-between gap-3 sm:flex-row">
                                 <div className="min-w-0">
-                                    <CardTitle className="truncate text-lg">
+                                    <CardTitle className="text-lg break-words">
                                         {event.title}
                                     </CardTitle>
-                                    <p className="text-muted-foreground truncate text-sm">
+                                    <p className="text-muted-foreground text-sm break-words">
                                         {event.organizer.name} ·{' '}
                                         {event.organizer.email}
                                     </p>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
+                                <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
                                     <Badge variant="outline">
                                         {statusLabels[event.status]}
                                     </Badge>
@@ -100,7 +100,7 @@ export default function AdminEvents({
                                     )}
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex justify-end">
+                            <CardContent className="flex justify-start sm:justify-end">
                                 <Form
                                     action={
                                         event.suspended
@@ -115,6 +115,7 @@ export default function AdminEvents({
                                 >
                                     {({ processing }) => (
                                         <Button
+                                            className="w-full sm:w-auto"
                                             variant={
                                                 event.suspended
                                                     ? 'outline'
