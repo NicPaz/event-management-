@@ -9,12 +9,14 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { create, index } from '@/routes/events';
-import type { EventTypeOption } from '@/types';
+import type { EventThemeOption, EventTypeOption } from '@/types';
 
 export default function CreateEvent({
     eventTypes,
+    themeOptions,
 }: {
     eventTypes: EventTypeOption[];
+    themeOptions: EventThemeOption[];
 }) {
     return (
         <>
@@ -42,6 +44,7 @@ export default function CreateEvent({
                         <EventForm
                             action={EventController.store()}
                             eventTypes={eventTypes}
+                            themeOptions={themeOptions}
                             submitLabel="Criar evento"
                         />
                     </CardContent>

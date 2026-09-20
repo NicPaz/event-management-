@@ -126,6 +126,57 @@ test('a reservation request without guest identification is rejected', function 
     expect($gift->refresh()->quantity_reserved)->toBe(0);
 });
 
+test('participation exposes only active gifts reserved by that guest', function () {
+    $event = Event::factory()->published()->create();
+    $reservedGift = Gift::factory()->for($event)->create(['name' => 'Jogo de pratos', 'quantity_total' => 3]);
+    Gift::factory()->for($event)->create(['name' => 'Outro presente']);
+    identifyGuest($event)->assertRedirect();
+    $guest = EventGuest::query()->sole();
+    app(ReserveGift::class)->handle($guest, $reservedGift, 2);
+
+    $this->get(route('public.events.participation', $event))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('event.gifts', 0)
+            ->has('reservations', 1)
+            ->where('reservations.0.giftId', $reservedGift->id)
+            ->where('reservations.0.giftName', 'Jogo de pratos')
+            ->where('reservations.0.quantity', 2)
+        );
+});
+
+test('public gifts keep configured order inside available and sold out groups', function () {
+    $event = Event::factory()->published()->create();
+    $soldOutFirst = Gift::factory()->for($event)->create([
+        'name' => 'Esgotado',
+        'quantity_total' => 1,
+        'quantity_reserved' => 1,
+        'position' => 0,
+    ]);
+    $partiallyReserved = Gift::factory()->for($event)->create([
+        'name' => 'Parcial',
+        'quantity_total' => 3,
+        'quantity_reserved' => 2,
+        'position' => 1,
+    ]);
+    $available = Gift::factory()->for($event)->create([
+        'name' => 'Disponível',
+        'quantity_total' => 2,
+        'quantity_reserved' => 0,
+        'position' => 2,
+    ]);
+
+    $this->get(route('public.events.show', $event->slug))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('event.gifts.0.id', $partiallyReserved->id)
+            ->where('event.gifts.0.quantityAvailable', 1)
+            ->where('event.gifts.1.id', $available->id)
+            ->where('event.gifts.2.id', $soldOutFirst->id)
+            ->where('event.gifts.2.quantityAvailable', 0)
+        );
+});
+
 test('returning with equivalent name and phone format reuses the guest', function () {
     $event = Event::factory()->published()->create();
     identifyGuest($event)->assertRedirect();

@@ -6,6 +6,7 @@ use App\Actions\Events\GetEventInvitation;
 use App\Actions\Guests\ResolveGuestAccess;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,15 +25,20 @@ class GuestParticipationController extends Controller
             ->with('gift')
             ->where('status', 'active')
             ->get()
-            ->mapWithKeys(fn ($reservation): array => [
-                $reservation->gift_id => [
-                    'giftName' => $reservation->gift->name,
-                    'quantity' => $reservation->quantity,
-                ],
-            ]) ?? collect();
+            ->map(fn ($reservation): array => [
+                'giftId' => $reservation->gift_id,
+                'giftName' => $reservation->gift->name,
+                'imageUrl' => $reservation->gift->image_path === null
+                    ? null
+                    : Storage::disk('public')->url($reservation->gift->image_path),
+                'quantity' => $reservation->quantity,
+            ])->values() ?? collect();
+
+        $eventData = $invitation->handle($event);
+        $eventData['gifts'] = [];
 
         return Inertia::render('events/participation', [
-            'event' => $invitation->handle($event),
+            'event' => $eventData,
             'guest' => $guest === null ? null : [
                 'name' => $guest->name,
                 'rsvpStatus' => $guest->rsvp_status->value,

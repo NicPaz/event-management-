@@ -81,7 +81,7 @@ class Event extends Model
     /** @return HasMany<Gift, $this> */
     public function gifts(): HasMany
     {
-        return $this->hasMany(Gift::class)->orderBy('position');
+        return $this->hasMany(Gift::class)->orderBy('position')->orderBy('id');
     }
 
     /** @return HasMany<AuditLog, $this> */

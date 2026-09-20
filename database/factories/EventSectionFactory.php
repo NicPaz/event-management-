@@ -23,7 +23,7 @@ class EventSectionFactory extends Factory
             'event_id' => Event::factory(),
             'type' => fake()->randomElement(EventSectionType::cases()),
             'enabled' => true,
-            'position' => fake()->numberBetween(0, 7),
+            'position' => fake()->numberBetween(0, count(EventSectionType::cases()) - 1),
         ];
     }
 }

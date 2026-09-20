@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Events\ApplyEventTheme;
 use App\EventType;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
 use App\RsvpStatus;
+use App\Support\EventThemeCatalog;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,18 +34,24 @@ class EventController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(EventThemeCatalog $themes): Response
     {
         Gate::authorize('create', Event::class);
 
         return Inertia::render('dashboard/events/create', [
             'eventTypes' => $this->eventTypes(),
+            'themeOptions' => collect(EventType::cases())->flatMap($themes->forType(...))->values(),
         ]);
     }
 
-    public function store(StoreEventRequest $request): RedirectResponse
+    public function store(StoreEventRequest $request, ApplyEventTheme $applyTheme): RedirectResponse
     {
-        $event = $request->user()->events()->create($this->eventAttributes($request));
+        $event = DB::transaction(function () use ($request, $applyTheme): Event {
+            $event = $request->user()->events()->create($this->eventAttributes($request));
+            $applyTheme->handle($event, $request->string('theme_key')->toString());
+
+            return $event;
+        });
 
         return redirect()->route('events.edit', $event)->with('success', 'Evento criado.');
     }

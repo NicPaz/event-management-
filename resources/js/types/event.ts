@@ -7,6 +7,7 @@ export type EventSectionType =
     | 'countdown'
     | 'palette'
     | 'gifts'
+    | 'confirmed_guests'
     | 'instructions'
     | 'rsvp';
 
@@ -35,6 +36,7 @@ export type EventDetails = {
 };
 
 export type EventTheme = {
+    templateKey: string;
     backgroundColor: string;
     surfaceColor: string;
     textColor: string;
@@ -42,6 +44,33 @@ export type EventTheme = {
     borderColor: string;
     bannerUrl: string | null;
     bannerPosition: 'top' | 'center' | 'bottom';
+    fontPair: string;
+    coverLayout: string;
+    cardStyle: string;
+    buttonStyle: string;
+    decorationStyle: string;
+    backgroundUrl: string | null;
+    backgroundFill: 'cover' | 'repeat';
+    backgroundPosition: 'top' | 'center' | 'bottom' | 'left' | 'right';
+    backgroundOverlay: 'light' | 'dark';
+    backgroundOverlayOpacity: number;
+};
+
+export type EventThemeOption = {
+    key: string;
+    type: string;
+    name: string;
+    description: string;
+    backgroundColor: string;
+    surfaceColor: string;
+    textColor: string;
+    accentColor: string;
+    borderColor: string;
+    fontPair: string;
+    coverLayout: string;
+    cardStyle: string;
+    buttonStyle: string;
+    decorationStyle: string;
 };
 
 export type EventSection = {
@@ -87,4 +116,5 @@ export type EventInvitation = {
     sections: EventSection[];
     paletteItems: EventPaletteItem[];
     gifts: EventGift[];
+    confirmedGuestNames?: string[];
 };

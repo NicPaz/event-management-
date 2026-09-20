@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\EventSectionType;
 use App\Models\Event;
+use App\Models\EventTheme;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,31 @@ use Illuminate\Validation\Validator;
 
 class UpdateEventAppearanceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $event = $this->route('event');
+        $theme = $event instanceof Event ? $event->theme()->firstOrNew() : new EventTheme;
+        $sections = $this->input('sections', []);
+
+        if (is_array($sections)
+            && ! collect($sections)->contains(fn (mixed $section): bool => is_array($section)
+                && ($section['type'] ?? null) === EventSectionType::ConfirmedGuests->value)) {
+            $sections[] = [
+                'type' => EventSectionType::ConfirmedGuests->value,
+                'enabled' => false,
+                'position' => count($sections),
+            ];
+        }
+
+        $this->merge([
+            'background_fill' => $this->input('background_fill', $theme->background_fill),
+            'background_position' => $this->input('background_position', $theme->background_position),
+            'background_overlay' => $this->input('background_overlay', $theme->background_overlay),
+            'background_overlay_opacity' => $this->input('background_overlay_opacity', $theme->background_overlay_opacity),
+            'sections' => $sections,
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,10 +63,16 @@ class UpdateEventAppearanceRequest extends FormRequest
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=4000'],
             'banner_position' => ['required', Rule::in(['top', 'center', 'bottom'])],
             'remove_banner' => ['sometimes', 'boolean'],
-            'sections' => ['required', 'array', 'size:8'],
+            'background' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
+            'background_fill' => ['required', Rule::in(['cover', 'repeat'])],
+            'background_position' => ['required', Rule::in(['top', 'center', 'bottom', 'left', 'right'])],
+            'background_overlay' => ['required', Rule::in(['light', 'dark'])],
+            'background_overlay_opacity' => ['required', 'integer', 'between:0,80'],
+            'remove_background' => ['sometimes', 'boolean'],
+            'sections' => ['required', 'array', 'size:'.count(EventSectionType::cases())],
             'sections.*.type' => ['required', 'distinct', Rule::enum(EventSectionType::class)],
             'sections.*.enabled' => ['required', 'boolean'],
-            'sections.*.position' => ['required', 'integer', 'between:0,7', 'distinct'],
+            'sections.*.position' => ['required', 'integer', 'between:0,'.(count(EventSectionType::cases()) - 1), 'distinct'],
             'palette_items' => ['present', 'array', 'max:20'],
             'palette_items.*.label' => ['required', 'string', 'max:80'],
             'palette_items.*.color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],

@@ -10,6 +10,7 @@ enum EventSectionType: string
     case Countdown = 'countdown';
     case Palette = 'palette';
     case Gifts = 'gifts';
+    case ConfirmedGuests = 'confirmed_guests';
     case Instructions = 'instructions';
     case Rsvp = 'rsvp';
 
@@ -22,8 +23,14 @@ enum EventSectionType: string
             self::Countdown => 'Contagem regressiva',
             self::Palette => 'Paleta da casa',
             self::Gifts => 'Presentes',
+            self::ConfirmedGuests => 'Quem já confirmou',
             self::Instructions => 'Orientações',
             self::Rsvp => 'Confirmação de presença',
         };
+    }
+
+    public function enabledByDefault(): bool
+    {
+        return $this !== self::ConfirmedGuests;
     }
 }

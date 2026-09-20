@@ -15,33 +15,49 @@ class UpdateEventAppearance
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function handle(Event $event, array $attributes, ?UploadedFile $banner): void
-    {
+    public function handle(
+        Event $event,
+        array $attributes,
+        ?UploadedFile $banner,
+        ?UploadedFile $background,
+    ): void {
         $event->loadMissing('theme');
         $oldBannerPath = $event->theme?->banner_path;
+        $oldBackgroundPath = $event->theme?->background_path;
         $newBannerPath = $banner?->store("events/{$event->id}/banners", 'public');
+        $newBackgroundPath = $background?->store("events/{$event->id}/backgrounds", 'public');
 
-        if ($newBannerPath === false) {
-            throw new RuntimeException('Não foi possível armazenar o banner do evento.');
+        if ($newBannerPath === false || $newBackgroundPath === false) {
+            Storage::disk('public')->delete(array_filter([$newBannerPath, $newBackgroundPath]));
+
+            throw new RuntimeException('Não foi possível armazenar uma das imagens do evento.');
         }
 
         try {
-            DB::transaction(function () use ($event, $attributes, $newBannerPath): void {
+            DB::transaction(function () use ($event, $attributes, $newBannerPath, $newBackgroundPath): void {
                 $themeAttributes = [
-                    'template_key' => 'neutral',
                     'background_color' => strtoupper((string) $attributes['background_color']),
                     'surface_color' => strtoupper((string) $attributes['surface_color']),
                     'text_color' => strtoupper((string) $attributes['text_color']),
                     'accent_color' => strtoupper((string) $attributes['accent_color']),
                     'border_color' => strtoupper((string) $attributes['border_color']),
-                    'font_pair' => 'classic',
                     'banner_position' => $attributes['banner_position'],
+                    'background_fill' => $attributes['background_fill'],
+                    'background_position' => $attributes['background_position'],
+                    'background_overlay' => $attributes['background_overlay'],
+                    'background_overlay_opacity' => $attributes['background_overlay_opacity'],
                 ];
 
                 if ($newBannerPath !== null) {
                     $themeAttributes['banner_path'] = $newBannerPath;
                 } elseif ((bool) ($attributes['remove_banner'] ?? false)) {
                     $themeAttributes['banner_path'] = null;
+                }
+
+                if ($newBackgroundPath !== null) {
+                    $themeAttributes['background_path'] = $newBackgroundPath;
+                } elseif ((bool) ($attributes['remove_background'] ?? false)) {
+                    $themeAttributes['background_path'] = null;
                 }
 
                 $event->theme()->updateOrCreate([], $themeAttributes);
@@ -53,9 +69,7 @@ class UpdateEventAppearance
                 $event->paletteItems()->createMany($this->paletteRecords($attributes['palette_items'] ?? null));
             });
         } catch (Throwable $exception) {
-            if ($newBannerPath !== null) {
-                Storage::disk('public')->delete($newBannerPath);
-            }
+            Storage::disk('public')->delete(array_filter([$newBannerPath, $newBackgroundPath]));
 
             throw $exception;
         }
@@ -65,6 +79,13 @@ class UpdateEventAppearance
 
         if ($oldBannerPath !== null && ($bannerWasReplaced || $bannerWasRemoved)) {
             Storage::disk('public')->delete($oldBannerPath);
+        }
+
+        $backgroundWasReplaced = $newBackgroundPath !== null;
+        $backgroundWasRemoved = (bool) ($attributes['remove_background'] ?? false);
+
+        if ($oldBackgroundPath !== null && ($backgroundWasReplaced || $backgroundWasRemoved)) {
+            Storage::disk('public')->delete($oldBackgroundPath);
         }
     }
 

@@ -11,8 +11,10 @@ import {
     Trash2,
 } from 'lucide-react';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
+import EventThemeController from '@/actions/App/Http/Controllers/EventThemeController';
 import EventInvitation from '@/components/event-invitation';
 import InputError from '@/components/input-error';
+import ThemePreview from '@/components/theme-preview';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -23,10 +25,19 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { index, show } from '@/routes/events';
 import type {
     EventInvitation as EventInvitationData,
     EventSection,
+    EventThemeOption,
 } from '@/types';
 
 type EditableSection = Pick<
@@ -50,6 +61,12 @@ type AppearanceFormData = {
     banner: File | null;
     banner_position: 'top' | 'center' | 'bottom';
     remove_banner: boolean;
+    background: File | null;
+    background_fill: 'cover' | 'repeat';
+    background_position: 'top' | 'center' | 'bottom' | 'left' | 'right';
+    background_overlay: 'light' | 'dark';
+    background_overlay_opacity: number;
+    remove_background: boolean;
     sections: EditableSection[];
     palette_items: EditablePaletteItem[];
 };
@@ -84,8 +101,10 @@ function moveItem<T>(items: T[], from: number, to: number): T[] {
 
 export default function EventAppearance({
     event,
+    themeOptions,
 }: {
     event: EventInvitationData;
+    themeOptions: EventThemeOption[];
 }) {
     const form = useForm<AppearanceFormData>({
         background_color: event.theme.backgroundColor,
@@ -96,6 +115,12 @@ export default function EventAppearance({
         banner: null,
         banner_position: event.theme.bannerPosition,
         remove_banner: false,
+        background: null,
+        background_fill: event.theme.backgroundFill,
+        background_position: event.theme.backgroundPosition,
+        background_overlay: event.theme.backgroundOverlay,
+        background_overlay_opacity: event.theme.backgroundOverlayOpacity,
+        remove_background: false,
         sections: event.sections,
         palette_items: event.paletteItems.map((item) => ({
             label: item.label,
@@ -106,6 +131,18 @@ export default function EventAppearance({
     });
     const [viewport, setViewport] = useState<'mobile' | 'desktop'>('desktop');
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [backgroundPreview, setBackgroundPreview] = useState<string | null>(
+        null,
+    );
+    const [pendingTheme, setPendingTheme] = useState<EventThemeOption | null>(
+        null,
+    );
+    const themeForm = useForm({ theme_key: event.theme.templateKey });
+    const activeThemeKey = themeOptions.some(
+        (theme) => theme.key === event.theme.templateKey,
+    )
+        ? event.theme.templateKey
+        : themeOptions[0]?.key;
     const draggedSection = useRef<number | null>(null);
 
     useEffect(() => {
@@ -120,6 +157,19 @@ export default function EventAppearance({
 
         return () => URL.revokeObjectURL(objectUrl);
     }, [form.data.banner]);
+
+    useEffect(() => {
+        if (!form.data.background) {
+            setBackgroundPreview(null);
+
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(form.data.background);
+        setBackgroundPreview(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [form.data.background]);
 
     const normalizeSections = (sections: EditableSection[]) =>
         sections.map((section, position) => ({ ...section, position }));
@@ -137,6 +187,7 @@ export default function EventAppearance({
     const previewEvent: EventInvitationData = {
         ...event,
         theme: {
+            ...event.theme,
             backgroundColor: form.data.background_color,
             surfaceColor: form.data.surface_color,
             textColor: form.data.text_color,
@@ -146,6 +197,13 @@ export default function EventAppearance({
                 ? bannerPreview
                 : (bannerPreview ?? event.theme.bannerUrl),
             bannerPosition: form.data.banner_position,
+            backgroundUrl: form.data.remove_background
+                ? backgroundPreview
+                : (backgroundPreview ?? event.theme.backgroundUrl),
+            backgroundFill: form.data.background_fill,
+            backgroundPosition: form.data.background_position,
+            backgroundOverlay: form.data.background_overlay,
+            backgroundOverlayOpacity: form.data.background_overlay_opacity,
         },
         sections: form.data.sections,
         paletteItems: form.data.palette_items.map((item) => ({
@@ -234,6 +292,45 @@ export default function EventAppearance({
                     <div className="bg-background flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-b p-4 md:border-r md:border-b-0">
                         <Card>
                             <CardHeader>
+                                <CardTitle>Tema visual</CardTitle>
+                                <CardDescription>
+                                    Trocar ou restaurar um tema redefine cores,
+                                    composição e imagens. Dados, presentes,
+                                    convidados, reservas e seções são
+                                    preservados.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-4">
+                                {themeOptions.map((theme) => (
+                                    <ThemePreview
+                                        key={theme.key}
+                                        theme={theme}
+                                        selected={theme.key === activeThemeKey}
+                                        onSelect={() => setPendingTheme(theme)}
+                                    />
+                                ))}
+                                {activeThemeKey && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setPendingTheme(
+                                                themeOptions.find(
+                                                    (theme) =>
+                                                        theme.key ===
+                                                        activeThemeKey,
+                                                ) ?? null,
+                                            )
+                                        }
+                                    >
+                                        Restaurar aparência original do tema
+                                    </Button>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
                                 <CardTitle>Cores do convite</CardTitle>
                                 <CardDescription>
                                     O texto precisa manter contraste mínimo com
@@ -279,6 +376,173 @@ export default function EventAppearance({
                                         />
                                     </div>
                                 ))}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Imagem de fundo</CardTitle>
+                                <CardDescription>
+                                    Independente do banner. A sobreposição
+                                    mantém textos e botões legíveis no celular e
+                                    no desktop.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-5">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="background">Imagem</Label>
+                                    <Input
+                                        id="background"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={(inputEvent) =>
+                                            form.setData(
+                                                'background',
+                                                inputEvent.target.files?.[0] ??
+                                                    null,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={form.errors.background}
+                                    />
+                                </div>
+                                {(backgroundPreview ||
+                                    (!form.data.remove_background &&
+                                        event.theme.backgroundUrl)) && (
+                                    <img
+                                        src={
+                                            backgroundPreview ??
+                                            event.theme.backgroundUrl ??
+                                            ''
+                                        }
+                                        alt="Prévia do fundo"
+                                        className="h-28 w-full rounded-lg border object-cover"
+                                    />
+                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="background_fill">
+                                            Preenchimento
+                                        </Label>
+                                        <select
+                                            id="background_fill"
+                                            value={form.data.background_fill}
+                                            onChange={(inputEvent) =>
+                                                form.setData(
+                                                    'background_fill',
+                                                    inputEvent.target
+                                                        .value as AppearanceFormData['background_fill'],
+                                                )
+                                            }
+                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                        >
+                                            <option value="cover">
+                                                Cobrir a área
+                                            </option>
+                                            <option value="repeat">
+                                                Repetir como textura
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="background_position">
+                                            Posição
+                                        </Label>
+                                        <select
+                                            id="background_position"
+                                            value={
+                                                form.data.background_position
+                                            }
+                                            onChange={(inputEvent) =>
+                                                form.setData(
+                                                    'background_position',
+                                                    inputEvent.target
+                                                        .value as AppearanceFormData['background_position'],
+                                                )
+                                            }
+                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                        >
+                                            <option value="top">Topo</option>
+                                            <option value="center">
+                                                Centro
+                                            </option>
+                                            <option value="bottom">Base</option>
+                                            <option value="left">
+                                                Esquerda
+                                            </option>
+                                            <option value="right">
+                                                Direita
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="background_overlay">
+                                            Sobreposição
+                                        </Label>
+                                        <select
+                                            id="background_overlay"
+                                            value={form.data.background_overlay}
+                                            onChange={(inputEvent) =>
+                                                form.setData(
+                                                    'background_overlay',
+                                                    inputEvent.target
+                                                        .value as AppearanceFormData['background_overlay'],
+                                                )
+                                            }
+                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                        >
+                                            <option value="light">Clara</option>
+                                            <option value="dark">Escura</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="background_overlay_opacity">
+                                            Intensidade:{' '}
+                                            {
+                                                form.data
+                                                    .background_overlay_opacity
+                                            }
+                                            %
+                                        </Label>
+                                        <Input
+                                            id="background_overlay_opacity"
+                                            type="range"
+                                            min={0}
+                                            max={80}
+                                            value={
+                                                form.data
+                                                    .background_overlay_opacity
+                                            }
+                                            onChange={(inputEvent) =>
+                                                form.setData(
+                                                    'background_overlay_opacity',
+                                                    Number(
+                                                        inputEvent.target.value,
+                                                    ),
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                                {event.theme.backgroundUrl && (
+                                    <label className="flex items-center gap-3 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                form.data.remove_background
+                                            }
+                                            onChange={(inputEvent) =>
+                                                form.setData(
+                                                    'remove_background',
+                                                    inputEvent.target.checked,
+                                                )
+                                            }
+                                            className="accent-primary size-4"
+                                        />
+                                        Remover imagem de fundo atual
+                                    </label>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -362,6 +626,9 @@ export default function EventAppearance({
                                 <CardDescription>
                                     Arraste ou use os botões para ordenar. A
                                     visibilidade não altera permissões futuras.
+                                    Ao ativar “Quem já confirmou”, os nomes dos
+                                    titulares confirmados ficarão públicos no
+                                    convite.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-2">
@@ -422,6 +689,13 @@ export default function EventAppearance({
                                             >
                                                 {section.label}
                                             </Label>
+                                            {section.type ===
+                                                'confirmed_guests' &&
+                                                section.enabled && (
+                                                    <span className="text-[11px] leading-tight text-amber-700">
+                                                        nomes públicos
+                                                    </span>
+                                                )}
                                             <Button
                                                 type="button"
                                                 size="icon"
@@ -654,6 +928,59 @@ export default function EventAppearance({
                     </aside>
                 </form>
             </div>
+            <Dialog
+                open={pendingTheme !== null}
+                onOpenChange={(open) => !open && setPendingTheme(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {pendingTheme?.key === event.theme.templateKey
+                                ? 'Restaurar aparência original?'
+                                : `Aplicar ${pendingTheme?.name}?`}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Cores, tipografia, composição, cartões, botões,
+                            banner e imagem de fundo serão substituídos pelos
+                            padrões do tema. Informações do evento, presentes,
+                            convidados, reservas e a visibilidade/ordem das
+                            seções não serão alterados.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setPendingTheme(null)}
+                        >
+                            Manter personalizações
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={
+                                themeForm.processing || pendingTheme === null
+                            }
+                            onClick={() => {
+                                if (pendingTheme === null) return;
+                                themeForm.transform(() => ({
+                                    theme_key: pendingTheme.key,
+                                }));
+                                themeForm.post(
+                                    EventThemeController.update(event.id).url,
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => setPendingTheme(null),
+                                    },
+                                );
+                            }}
+                        >
+                            {themeForm.processing
+                                ? 'Aplicando...'
+                                : 'Confirmar substituição'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

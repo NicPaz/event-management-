@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowLeft, Gift } from 'lucide-react';
 import GuestAttendanceController from '@/actions/App/Http/Controllers/GuestAttendanceController';
 import GuestIdentityController from '@/actions/App/Http/Controllers/GuestIdentityController';
 import GiftReservationController from '@/actions/App/Http/Controllers/GiftReservationController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     Card,
     CardContent,
@@ -23,6 +32,13 @@ type GuestParticipation = {
     companionsCount: number;
 };
 
+type ReservedGift = {
+    giftId: number;
+    giftName: string;
+    imageUrl: string | null;
+    quantity: number;
+};
+
 const statusLabels: Record<GuestParticipation['rsvpStatus'], string> = {
     unanswered: 'Você ainda não respondeu',
     confirmed: 'Sua presença está confirmada',
@@ -38,11 +54,12 @@ export default function Participation({
     event: EventInvitation;
     guest: GuestParticipation | null;
     canRespond: boolean;
-    reservations: Record<string, { giftName: string; quantity: number }>;
+    reservations: ReservedGift[];
 }) {
     const [attendanceChoice, setAttendanceChoice] = useState<
         'confirmed' | 'declined' | null
     >(null);
+    const [giftToCancel, setGiftToCancel] = useState<ReservedGift | null>(null);
 
     return (
         <>
@@ -55,17 +72,24 @@ export default function Participation({
                 }}
             >
                 <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
-                    <div className="text-center">
-                        <Link
-                            href={publicEvent(event.slug ?? '')}
-                            className="text-sm underline underline-offset-4"
+                    <div>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="w-full sm:w-auto"
                         >
-                            Voltar ao convite
-                        </Link>
-                        <h1 className="mt-5 font-serif text-4xl">
-                            Minha participação
-                        </h1>
-                        <p className="mt-2 text-sm opacity-70">{event.title}</p>
+                            <Link href={publicEvent(event.slug ?? '')}>
+                                <ArrowLeft /> Voltar para o convite
+                            </Link>
+                        </Button>
+                        <div className="mt-6 text-center">
+                            <h1 className="mt-5 font-serif text-4xl">
+                                Minha participação
+                            </h1>
+                            <p className="mt-2 text-sm opacity-70">
+                                {event.title}
+                            </p>
+                        </div>
                     </div>
 
                     {guest === null ? (
@@ -367,121 +391,64 @@ export default function Participation({
                                 </CardContent>
                             </Card>
 
-                            <Card id="presentes">
+                            <Card>
                                 <CardHeader>
                                     <CardTitle>Meus presentes</CardTitle>
                                     <CardDescription>
-                                        Reserve a quantidade final desejada.
-                                        Repetir o mesmo valor não duplica a
-                                        reserva.
+                                        Aqui aparecem somente os presentes que
+                                        você reservou neste evento.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="grid gap-4">
-                                    {event.gifts.map((gift) => {
-                                        const reservation =
-                                            reservations[String(gift.id)];
-                                        return (
-                                            <div
-                                                key={gift.id}
-                                                id={`presente-${gift.id}`}
-                                                className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto] sm:items-end"
-                                            >
-                                                <div>
-                                                    <h3 className="font-medium">
-                                                        {gift.name}
-                                                    </h3>
-                                                    <p className="text-muted-foreground text-sm">
-                                                        {gift.quantityAvailable}{' '}
-                                                        {gift.quantityAvailable ===
-                                                        1
-                                                            ? 'unidade disponível'
-                                                            : 'unidades disponíveis'}
-                                                        {reservation
-                                                            ? ` · você reservou ${reservation.quantity}`
-                                                            : ''}
-                                                    </p>
+                                    {reservations.map((reservation) => (
+                                        <article
+                                            key={reservation.giftId}
+                                            className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center"
+                                        >
+                                            {reservation.imageUrl ? (
+                                                <img
+                                                    src={reservation.imageUrl}
+                                                    alt=""
+                                                    className="aspect-[4/3] w-full rounded-lg object-cover sm:size-24"
+                                                />
+                                            ) : (
+                                                <div className="bg-muted flex aspect-[4/3] w-full items-center justify-center rounded-lg sm:size-24">
+                                                    <Gift className="text-muted-foreground size-7" />
                                                 </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <Form
-                                                        action={GiftReservationController.update(
-                                                            {
-                                                                event:
-                                                                    event.slug ??
-                                                                    '',
-                                                                gift: gift.id,
-                                                            },
-                                                        )}
-                                                        options={{
-                                                            preserveScroll: true,
-                                                        }}
-                                                    >
-                                                        {({
-                                                            errors,
-                                                            processing,
-                                                        }) => (
-                                                            <div className="flex items-start gap-2">
-                                                                <Input
-                                                                    name="quantity"
-                                                                    type="number"
-                                                                    min={1}
-                                                                    max={
-                                                                        gift.quantityTotal
-                                                                    }
-                                                                    defaultValue={
-                                                                        reservation?.quantity ??
-                                                                        1
-                                                                    }
-                                                                    className="w-20"
-                                                                    aria-label={`Quantidade de ${gift.name}`}
-                                                                />
-                                                                <Button
-                                                                    disabled={
-                                                                        processing ||
-                                                                        event.isReadOnly ||
-                                                                        (gift.quantityAvailable ===
-                                                                            0 &&
-                                                                            !reservation)
-                                                                    }
-                                                                >
-                                                                    Reservar
-                                                                </Button>
-                                                                <InputError
-                                                                    message={
-                                                                        errors.quantity ??
-                                                                        errors.identity
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </Form>
-                                                    {reservation && (
-                                                        <Form
-                                                            action={GiftReservationController.destroy(
-                                                                {
-                                                                    event:
-                                                                        event.slug ??
-                                                                        '',
-                                                                    gift: gift.id,
-                                                                },
-                                                            )}
-                                                            options={{
-                                                                preserveScroll: true,
-                                                            }}
-                                                        >
-                                                            <Button variant="outline">
-                                                                Cancelar reserva
-                                                            </Button>
-                                                        </Form>
-                                                    )}
-                                                </div>
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="font-semibold">
+                                                    {reservation.giftName}
+                                                </h3>
+                                                <p className="text-muted-foreground mt-1 text-sm">
+                                                    Quantidade reservada:{' '}
+                                                    {reservation.quantity}
+                                                </p>
                                             </div>
-                                        );
-                                    })}
-                                    {event.gifts.length === 0 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setGiftToCancel(reservation)
+                                                }
+                                            >
+                                                Cancelar reserva
+                                            </Button>
+                                        </article>
+                                    ))}
+                                    {reservations.length === 0 && (
                                         <p className="text-muted-foreground text-sm">
-                                            Nenhum presente disponível.
+                                            Você ainda não reservou nenhum
+                                            presente.
                                         </p>
                                     )}
+                                    <Button asChild>
+                                        <Link
+                                            href={`${publicEvent(event.slug ?? '').url}#presentes`}
+                                        >
+                                            Escolher presentes no convite
+                                        </Link>
+                                    </Button>
                                 </CardContent>
                             </Card>
 
@@ -504,6 +471,58 @@ export default function Participation({
                     )}
                 </div>
             </main>
+
+            <Dialog
+                open={giftToCancel !== null}
+                onOpenChange={(open) => !open && setGiftToCancel(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancelar reserva?</DialogTitle>
+                        <DialogDescription>
+                            Todas as {giftToCancel?.quantity ?? 0} unidades de{' '}
+                            <strong>{giftToCancel?.giftName}</strong> serão
+                            liberadas para outros convidados. Esta ação não
+                            reduz apenas uma unidade.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {giftToCancel && (
+                        <Form
+                            action={GiftReservationController.destroy({
+                                event: event.slug ?? '',
+                                gift: giftToCancel.giftId,
+                            })}
+                            options={{ preserveScroll: true }}
+                            onSuccess={() => setGiftToCancel(null)}
+                        >
+                            {({ processing, errors }) => (
+                                <div className="grid gap-4">
+                                    <InputError message={errors.identity} />
+                                    <DialogFooter>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                setGiftToCancel(null)
+                                            }
+                                        >
+                                            Manter reserva
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                        >
+                                            {processing
+                                                ? 'Cancelando...'
+                                                : 'Liberar todas as unidades'}
+                                        </Button>
+                                    </DialogFooter>
+                                </div>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

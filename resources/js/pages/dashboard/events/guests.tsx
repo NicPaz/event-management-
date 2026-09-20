@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { Gift, Search, Users } from 'lucide-react';
 import EventGuestController from '@/actions/App/Http/Controllers/EventGuestController';
 import InputError from '@/components/input-error';
@@ -8,11 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { index as eventsIndex, show as eventShow } from '@/routes/events';
-import { index as guestsIndex } from '@/routes/events/guests';
+import {
+    create,
+    index as eventsIndex,
+    show as eventShow,
+} from '@/routes/events';
+import { index as giftsIndex } from '@/routes/gifts';
+import { index as guestsIndex } from '@/routes/guests';
+import { index as nestedGuestsIndex } from '@/routes/events/guests';
 
 type GuestStatus = 'unanswered' | 'confirmed' | 'declined';
-
 type Guest = {
     id: number;
     name: string;
@@ -21,12 +26,12 @@ type Guest = {
     companionsCount: number;
     reservations: { giftName: string; quantity: number }[];
 };
-
 type PaginatedGuests = {
     data: Guest[];
     links: PaginationLink[];
     total: number;
 };
+type EventOption = { id: number; title: string };
 
 const statusLabels: Record<GuestStatus, string> = {
     unanswered: 'Sem resposta',
@@ -36,11 +41,14 @@ const statusLabels: Record<GuestStatus, string> = {
 
 export default function EventGuests({
     event,
+    events = [],
     guests,
     filters,
     metrics,
+    standalone = false,
 }: {
-    event: { id: number; title: string };
+    event: EventOption | null;
+    events?: EventOption[];
     guests: PaginatedGuests;
     filters: { search: string };
     metrics: {
@@ -50,6 +58,7 @@ export default function EventGuests({
         declinedGuests: number;
         reservedUnits: number;
     };
+    standalone?: boolean;
 }) {
     const metricCards = [
         ['Titulares confirmados', metrics.confirmedGuests],
@@ -58,91 +67,180 @@ export default function EventGuests({
         ['Não irão', metrics.declinedGuests],
         ['Itens reservados', metrics.reservedUnits],
     ] as const;
+    const searchAction = event
+        ? standalone
+            ? guestsIndex({ query: { event: event.id } })
+            : nestedGuestsIndex(event.id)
+        : guestsIndex();
 
     return (
         <>
-            <Head title={`Convidados — ${event.title}`} />
-
+            <Head
+                title={event ? `Convidados — ${event.title}` : 'Convidados'}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold">
-                            Convidados e reservas
-                        </h1>
+                        <h1 className="text-2xl font-semibold">Convidados</h1>
                         <p className="text-muted-foreground text-sm">
-                            {event.title}
+                            {event?.title ??
+                                'Selecione um evento para consultar convidados e reservas.'}
                         </p>
                     </div>
-                    <Button asChild variant="outline">
-                        <Link href={eventShow(event.id)}>Voltar ao evento</Link>
-                    </Button>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                    {metricCards.map(([label, value]) => (
-                        <Card key={label}>
-                            <CardHeader className="gap-1">
-                                <p className="text-muted-foreground text-sm">
-                                    {label}
-                                </p>
-                                <CardTitle className="text-3xl tabular-nums">
-                                    {value}
-                                </CardTitle>
-                            </CardHeader>
-                        </Card>
-                    ))}
-                </div>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <Form
-                            action={guestsIndex(event.id)}
-                            options={{ preserveState: true, replace: true }}
-                            className="flex flex-col gap-3 sm:flex-row"
-                        >
-                            <div className="relative flex-1">
-                                <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                                <Input
-                                    name="search"
-                                    defaultValue={filters.search}
-                                    placeholder="Buscar por nome ou telefone"
-                                    className="pl-9"
-                                />
-                            </div>
-                            <Button>Buscar</Button>
-                            {filters.search && (
+                    {event && (
+                        <div className="flex flex-wrap gap-2">
+                            {standalone && (
                                 <Button asChild variant="outline">
-                                    <Link href={guestsIndex(event.id)}>
-                                        Limpar
+                                    <Link
+                                        href={giftsIndex({
+                                            query: { event: event.id },
+                                        })}
+                                    >
+                                        Ver presentes
                                     </Link>
                                 </Button>
                             )}
-                        </Form>
-                    </CardContent>
-                </Card>
-
-                <div className="grid gap-4 xl:grid-cols-2">
-                    {guests.data.map((guest) => (
-                        <GuestCard
-                            key={guest.id}
-                            eventId={event.id}
-                            guest={guest}
-                        />
-                    ))}
+                            <Button asChild variant="outline">
+                                <Link href={eventShow(event.id)}>
+                                    Abrir evento
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
-                {guests.data.length === 0 && (
-                    <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-                        <Users className="size-8" />
-                        <p>
-                            {filters.search
-                                ? 'Nenhum convidado encontrado para esta busca.'
-                                : 'Nenhum convidado identificado ainda.'}
+                {standalone && events.length > 0 && (
+                    <Card>
+                        <CardContent className="grid gap-2 pt-6">
+                            <Label htmlFor="selected-event">
+                                Evento selecionado
+                            </Label>
+                            <select
+                                id="selected-event"
+                                value={event?.id ?? ''}
+                                onChange={(inputEvent) => {
+                                    const value = inputEvent.target.value;
+                                    router.get(
+                                        guestsIndex({
+                                            query: value
+                                                ? { event: Number(value) }
+                                                : {},
+                                        }).url,
+                                    );
+                                }}
+                                className="border-input h-11 rounded-md border bg-transparent px-3 font-medium"
+                            >
+                                {events.length > 1 && (
+                                    <option value="">
+                                        Selecione um evento
+                                    </option>
+                                )}
+                                {events.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.title}
+                                    </option>
+                                ))}
+                            </select>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {standalone && events.length === 0 && (
+                    <div className="grid justify-items-center gap-4 rounded-xl border border-dashed p-10 text-center">
+                        <p className="text-muted-foreground">
+                            Você ainda não possui eventos.
                         </p>
+                        <Button asChild>
+                            <Link href={create()}>
+                                Criar meu primeiro evento
+                            </Link>
+                        </Button>
                     </div>
                 )}
 
-                <Pagination links={guests.links} />
+                {standalone && events.length > 1 && event === null && (
+                    <p className="text-muted-foreground rounded-xl border border-dashed p-10 text-center">
+                        Selecione um evento acima para visualizar os convidados.
+                    </p>
+                )}
+
+                {event && (
+                    <>
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                            {metricCards.map(([label, value]) => (
+                                <Card key={label}>
+                                    <CardHeader className="gap-1">
+                                        <p className="text-muted-foreground text-sm">
+                                            {label}
+                                        </p>
+                                        <CardTitle className="text-3xl tabular-nums">
+                                            {value}
+                                        </CardTitle>
+                                    </CardHeader>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <Form
+                                    action={searchAction}
+                                    options={{
+                                        preserveState: true,
+                                        replace: true,
+                                    }}
+                                    className="flex flex-col gap-3 sm:flex-row"
+                                >
+                                    {standalone && (
+                                        <input
+                                            type="hidden"
+                                            name="event"
+                                            value={event.id}
+                                        />
+                                    )}
+                                    <div className="relative flex-1">
+                                        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                                        <Input
+                                            name="search"
+                                            defaultValue={filters.search}
+                                            placeholder="Buscar por nome ou telefone"
+                                            className="pl-9"
+                                        />
+                                    </div>
+                                    <Button>Buscar</Button>
+                                    {filters.search && (
+                                        <Button asChild variant="outline">
+                                            <Link href={searchAction}>
+                                                Limpar
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </Form>
+                            </CardContent>
+                        </Card>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            {guests.data.map((guest) => (
+                                <GuestCard
+                                    key={guest.id}
+                                    eventId={event.id}
+                                    guest={guest}
+                                />
+                            ))}
+                        </div>
+                        {guests.data.length === 0 && (
+                            <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
+                                <Users className="size-8" />
+                                <p>
+                                    {filters.search
+                                        ? 'Nenhum convidado encontrado para esta busca.'
+                                        : 'Nenhum convidado identificado ainda.'}
+                                </p>
+                            </div>
+                        )}
+                        <Pagination links={guests.links} />
+                    </>
+                )}
             </div>
         </>
     );
@@ -185,7 +283,6 @@ function GuestCard({ eventId, guest }: { eventId: number; guest: Guest }) {
                         </p>
                     )}
                 </div>
-
                 <Form
                     action={EventGuestController.update({
                         event: eventId,
@@ -226,7 +323,7 @@ function GuestCard({ eventId, guest }: { eventId: number; guest: Guest }) {
                                     id={`status-${guest.id}`}
                                     name="status"
                                     defaultValue={guest.status}
-                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                    className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
                                 >
                                     <option value="unanswered">
                                         Sem resposta
@@ -269,5 +366,5 @@ function GuestCard({ eventId, guest }: { eventId: number; guest: Guest }) {
 }
 
 EventGuests.layout = {
-    breadcrumbs: [{ title: 'Meus eventos', href: eventsIndex() }],
+    breadcrumbs: [{ title: 'Eventos', href: eventsIndex() }],
 };

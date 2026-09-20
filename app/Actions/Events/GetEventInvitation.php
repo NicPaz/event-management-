@@ -24,7 +24,7 @@ class GetEventInvitation
                     return [
                         'type' => $type->value,
                         'label' => $type->label(),
-                        'enabled' => true,
+                        'enabled' => $type->enabledByDefault(),
                         'position' => $defaultPosition,
                     ];
                 }
@@ -58,7 +58,12 @@ class GetEventInvitation
             $mapUrl = 'https://www.openstreetmap.org/search?'.http_build_query(['query' => $event->address]);
         }
 
-        return [
+        $activeGifts = $event->gifts->whereNull('archived_at');
+        $orderedGifts = $activeGifts
+            ->filter(fn ($gift): bool => $gift->quantity_reserved < $gift->quantity_total)
+            ->concat($activeGifts->filter(fn ($gift): bool => $gift->quantity_reserved >= $gift->quantity_total));
+
+        $invitation = [
             'id' => $event->id,
             'title' => $event->title,
             'slug' => $event->slug,
@@ -73,6 +78,7 @@ class GetEventInvitation
             'mapUrl' => $mapUrl,
             'isReadOnly' => $event->status->value === 'closed',
             'theme' => [
+                'templateKey' => $theme->template_key,
                 'backgroundColor' => $theme->background_color,
                 'surfaceColor' => $theme->surface_color,
                 'textColor' => $theme->text_color,
@@ -82,6 +88,18 @@ class GetEventInvitation
                     ? null
                     : Storage::disk('public')->url($theme->banner_path),
                 'bannerPosition' => $theme->banner_position,
+                'fontPair' => $theme->font_pair,
+                'coverLayout' => $theme->cover_layout,
+                'cardStyle' => $theme->card_style,
+                'buttonStyle' => $theme->button_style,
+                'decorationStyle' => $theme->decoration_style,
+                'backgroundUrl' => $theme->background_path === null
+                    ? null
+                    : Storage::disk('public')->url($theme->background_path),
+                'backgroundFill' => $theme->background_fill,
+                'backgroundPosition' => $theme->background_position,
+                'backgroundOverlay' => $theme->background_overlay,
+                'backgroundOverlayOpacity' => $theme->background_overlay_opacity,
             ],
             'sections' => $sections,
             'paletteItems' => $event->paletteItems
@@ -93,8 +111,7 @@ class GetEventInvitation
                 ])
                 ->values()
                 ->all(),
-            'gifts' => $event->gifts
-                ->whereNull('archived_at')
+            'gifts' => $orderedGifts
                 ->map(fn ($gift): array => [
                     'id' => $gift->id,
                     'name' => $gift->name,
@@ -108,5 +125,17 @@ class GetEventInvitation
                 ->values()
                 ->all(),
         ];
+
+        $confirmedSection = collect($sections)->firstWhere('type', EventSectionType::ConfirmedGuests->value);
+
+        if (is_array($confirmedSection) && $confirmedSection['enabled'] === true) {
+            $invitation['confirmedGuestNames'] = $event->guests()
+                ->where('rsvp_status', 'confirmed')
+                ->orderBy('name')
+                ->pluck('name')
+                ->all();
+        }
+
+        return $invitation;
     }
 }

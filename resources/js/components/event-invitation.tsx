@@ -8,7 +8,14 @@ import {
     Heart,
     MapPin,
     Palette,
+    Users,
 } from 'lucide-react';
+import {
+    buttonClass,
+    cardClass,
+    decorationBackground,
+    fontStack,
+} from '@/lib/event-theme';
 import type {
     EventGift,
     EventInvitation as EventInvitationData,
@@ -42,9 +49,12 @@ function calculateCountdown(startsAt: string): CountdownRemaining {
     };
 }
 
-function SectionShell({ children }: { children: ReactNode }) {
+function SectionShell({ children, id }: { children: ReactNode; id?: string }) {
     return (
-        <section className="mx-auto w-full max-w-5xl px-5 py-10 @min-[640px]:px-8 @min-[640px]:py-14">
+        <section
+            id={id}
+            className="mx-auto w-full max-w-5xl px-5 py-10 @min-[640px]:px-8 @min-[640px]:py-14"
+        >
             {children}
         </section>
     );
@@ -127,6 +137,16 @@ export default function EventInvitation({
         '--event-border': event.theme.borderColor,
         '--event-surface': event.theme.surfaceColor,
         '--event-text': event.theme.textColor,
+        fontFamily: fontStack(event.theme.fontPair),
+        backgroundColor: event.theme.backgroundColor,
+        backgroundImage: event.theme.backgroundUrl
+            ? `linear-gradient(${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}, ${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}), url(${event.theme.backgroundUrl})`
+            : decorationBackground(event.theme),
+        backgroundSize:
+            event.theme.backgroundFill === 'repeat' ? 'auto' : 'cover',
+        backgroundRepeat:
+            event.theme.backgroundFill === 'repeat' ? 'repeat' : 'no-repeat',
+        backgroundPosition: event.theme.backgroundPosition,
     };
 
     const sections: Record<EventSectionType, ReactNode> = {
@@ -149,19 +169,19 @@ export default function EventInvitation({
                     <div className="absolute inset-0 bg-black/45" />
                 )}
                 <div
-                    className={`relative mx-auto flex min-h-[28rem] max-w-4xl flex-col items-center justify-center gap-6 px-5 py-20 text-center ${event.theme.bannerUrl ? 'text-white' : ''}`}
+                    className={`relative mx-auto flex min-h-[28rem] max-w-4xl flex-col justify-center gap-6 px-5 py-20 ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center text-center'} ${event.theme.coverLayout === 'framed' ? 'my-8 min-h-[24rem] border-2 border-(--event-border)' : ''} ${event.theme.bannerUrl ? 'text-white' : ''}`}
                 >
                     <span className="text-xs font-semibold tracking-[0.3em] uppercase">
                         Você está convidado
                     </span>
-                    <h1 className="font-serif text-5xl leading-tight text-balance @min-[640px]:text-7xl">
+                    <h1 className="text-5xl leading-tight text-balance @min-[640px]:text-7xl">
                         {event.title}
                     </h1>
                 </div>
             </section>
         ),
         welcome: event.welcomeText ? (
-            <SectionShell>
+            <SectionShell id="presentes">
                 <div className="mx-auto max-w-3xl text-center">
                     <Heart className="mx-auto size-7 text-(--event-accent)" />
                     <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
@@ -278,97 +298,145 @@ export default function EventInvitation({
                 </div>
                 {event.gifts.length > 0 ? (
                     <div className="mt-8 grid gap-4 @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3">
-                        {event.gifts.map((gift) => (
-                            <article
-                                key={gift.id}
-                                id={`presente-${gift.id}`}
-                                className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-(--event-border) bg-(--event-surface)"
-                            >
-                                {gift.imageUrl && (
-                                    <img
-                                        src={gift.imageUrl}
-                                        alt=""
-                                        className="aspect-[4/3] w-full object-cover"
-                                    />
-                                )}
-                                <div className="flex min-w-0 flex-1 flex-col p-5">
-                                    <h3 className="font-serif text-xl">
-                                        {gift.name}
-                                    </h3>
-                                    {gift.description && (
-                                        <p className="mt-2 text-sm leading-6 opacity-70">
-                                            {gift.description}
-                                        </p>
+                        {event.gifts.map((gift) => {
+                            const soldOut = gift.quantityAvailable <= 0;
+
+                            return (
+                                <article
+                                    key={gift.id}
+                                    id={`presente-${gift.id}`}
+                                    className={`relative flex min-w-0 flex-col overflow-hidden border border-(--event-border) bg-(--event-surface) ${cardClass(event.theme.cardStyle)}`}
+                                >
+                                    {soldOut && (
+                                        <span className="absolute top-3 right-3 z-10 rounded-full bg-neutral-950/85 px-3 py-1 text-xs font-semibold text-white">
+                                            Já reservado
+                                        </span>
                                     )}
-                                    <p className="mt-4 text-sm font-semibold">
-                                        {gift.quantityAvailable > 0
-                                            ? `${gift.quantityAvailable} ${gift.quantityAvailable === 1 ? 'unidade disponível' : 'unidades disponíveis'} de ${gift.quantityTotal}`
-                                            : 'Todos reservados'}
-                                    </p>
-                                    {giftReservations[String(gift.id)] && (
-                                        <p className="mt-2 text-sm text-emerald-700">
-                                            Você escolheu{' '}
-                                            {giftReservations[String(gift.id)]}{' '}
-                                            {giftReservations[
-                                                String(gift.id)
-                                            ] === 1
-                                                ? 'unidade'
-                                                : 'unidades'}
-                                        </p>
+                                    {gift.imageUrl && (
+                                        <img
+                                            src={gift.imageUrl}
+                                            alt=""
+                                            className={`aspect-[4/3] w-full object-cover transition ${soldOut ? 'opacity-55 grayscale' : ''}`}
+                                        />
                                     )}
-                                    <div className="mt-auto grid gap-2 pt-5 @min-[420px]:grid-cols-2">
-                                        {event.slug &&
-                                        showGuestActions &&
-                                        gift.quantityAvailable > 0 &&
-                                        onGiftSelect ? (
-                                            <button
-                                                type="button"
-                                                disabled={
-                                                    reservingGiftId !== null
-                                                }
-                                                onClick={() =>
-                                                    onGiftSelect(gift)
-                                                }
-                                                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-(--event-accent) px-3 text-center text-sm font-semibold text-white outline-offset-2 hover:brightness-95 focus-visible:outline-2"
-                                            >
-                                                {reservingGiftId === gift.id
-                                                    ? 'Reservando...'
-                                                    : 'Presentear'}
-                                            </button>
-                                        ) : (
-                                            <span
-                                                aria-disabled="true"
-                                                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-lg bg-(--event-accent) px-3 text-center text-sm font-semibold text-white opacity-45"
-                                            >
-                                                Presentear
-                                            </span>
+                                    <div className="flex min-w-0 flex-1 flex-col p-5">
+                                        <h3 className="font-serif text-xl">
+                                            {gift.name}
+                                        </h3>
+                                        {gift.description && (
+                                            <p className="mt-2 text-sm leading-6 opacity-70">
+                                                {gift.description}
+                                            </p>
                                         )}
-                                        {gift.purchaseUrl ? (
-                                            <a
-                                                href={gift.purchaseUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-(--event-border) px-3 text-center text-sm font-semibold text-(--event-accent) outline-offset-2 hover:bg-(--event-background) focus-visible:outline-2"
-                                            >
-                                                Sugestão de compra
-                                                <ExternalLink className="ml-1.5 size-3.5 shrink-0" />
-                                            </a>
-                                        ) : (
-                                            <span
-                                                aria-disabled="true"
-                                                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-lg border border-(--event-border) px-3 text-center text-sm font-semibold opacity-45"
-                                            >
-                                                Sugestão de compra
-                                            </span>
+                                        <p className="mt-4 text-sm font-semibold">
+                                            {gift.quantityAvailable > 0
+                                                ? `${gift.quantityAvailable} ${gift.quantityAvailable === 1 ? 'unidade disponível' : 'unidades disponíveis'} de ${gift.quantityTotal}`
+                                                : 'Sem unidades disponíveis'}
+                                        </p>
+                                        {giftReservations[String(gift.id)] && (
+                                            <p className="mt-2 text-sm text-emerald-700">
+                                                Você escolheu{' '}
+                                                {
+                                                    giftReservations[
+                                                        String(gift.id)
+                                                    ]
+                                                }{' '}
+                                                {giftReservations[
+                                                    String(gift.id)
+                                                ] === 1
+                                                    ? 'unidade'
+                                                    : 'unidades'}
+                                            </p>
                                         )}
+                                        <div className="mt-auto grid gap-2 pt-5 @min-[420px]:grid-cols-2">
+                                            {!soldOut &&
+                                            event.slug &&
+                                            showGuestActions &&
+                                            gift.quantityAvailable > 0 &&
+                                            onGiftSelect ? (
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        reservingGiftId !== null
+                                                    }
+                                                    onClick={() =>
+                                                        onGiftSelect(gift)
+                                                    }
+                                                    className={`inline-flex min-h-11 items-center justify-center bg-(--event-accent) px-3 text-center text-sm font-semibold text-white outline-offset-2 hover:brightness-95 focus-visible:outline-2 ${buttonClass(event.theme.buttonStyle)}`}
+                                                >
+                                                    {reservingGiftId === gift.id
+                                                        ? 'Reservando...'
+                                                        : 'Presentear'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    className={`inline-flex min-h-11 cursor-not-allowed items-center justify-center bg-(--event-accent) px-3 text-center text-sm font-semibold text-white opacity-45 ${buttonClass(event.theme.buttonStyle)}`}
+                                                >
+                                                    {soldOut
+                                                        ? 'Já reservado'
+                                                        : 'Presentear'}
+                                                </button>
+                                            )}
+                                            {gift.purchaseUrl ? (
+                                                <a
+                                                    href={gift.purchaseUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-(--event-border) px-3 text-center text-sm font-semibold text-(--event-accent) outline-offset-2 hover:bg-(--event-background) focus-visible:outline-2"
+                                                >
+                                                    Sugestão de compra
+                                                    <ExternalLink className="ml-1.5 size-3.5 shrink-0" />
+                                                </a>
+                                            ) : (
+                                                <span
+                                                    aria-disabled="true"
+                                                    className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-lg border border-(--event-border) px-3 text-center text-sm font-semibold opacity-45"
+                                                >
+                                                    Sugestão de compra
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            </article>
-                        ))}
+                                </article>
+                            );
+                        })}
                     </div>
                 ) : (
                     <p className="mt-8 text-center text-sm opacity-65">
                         A lista ainda não possui presentes.
+                    </p>
+                )}
+            </SectionShell>
+        ),
+        confirmed_guests: (
+            <SectionShell>
+                <div className="text-center">
+                    <Users className="mx-auto size-7 text-(--event-accent)" />
+                    <h2 className="mt-4 text-3xl @min-[640px]:text-4xl">
+                        Quem já confirmou
+                    </h2>
+                    <p className="mt-3 text-sm opacity-70">
+                        Pessoas que já confirmaram presença nesta celebração.
+                    </p>
+                </div>
+                {event.confirmedGuestNames &&
+                event.confirmedGuestNames.length > 0 ? (
+                    <div className="mt-8 flex flex-wrap justify-center gap-3">
+                        {event.confirmedGuestNames.map((name, index) => (
+                            <span
+                                key={`${name}-${index}`}
+                                className={`border border-(--event-border) bg-(--event-surface) px-5 py-3 font-medium ${cardClass(event.theme.cardStyle)}`}
+                            >
+                                {name}
+                            </span>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mt-8 text-center text-sm opacity-65">
+                        As confirmações aparecerão aqui.
                     </p>
                 )}
             </SectionShell>

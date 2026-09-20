@@ -47,8 +47,10 @@ test('organizers see default appearance for events without customization', funct
         ->component('dashboard/events/appearance')
         ->where('event.theme.backgroundColor', '#FAF7F2')
         ->where('event.theme.bannerUrl', null)
-        ->has('event.sections', 8)
+        ->has('event.sections', 9)
         ->where('event.sections.0.type', 'cover')
+        ->where('event.sections.6.type', 'confirmed_guests')
+        ->where('event.sections.6.enabled', false)
         ->has('event.paletteItems', 0)
     );
 });

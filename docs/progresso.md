@@ -33,7 +33,7 @@ Atualizado em 20/09/2026.
 - [x] Etapa 3 — aparência, seções e paleta da casa.
     - [x] Tema neutro com cinco cores editáveis e validação de contraste.
     - [x] Banner JPEG/PNG/WebP com posição configurável, substituição e remoção segura.
-    - [x] Oito seções com visibilidade, arraste e botões acessíveis de ordenação.
+    - [x] Nove seções com visibilidade, arraste e botões acessíveis de ordenação.
     - [x] Paleta da casa independente do tema, com cores e materiais.
     - [x] Componente compartilhado entre prévia, editor e página pública.
     - [x] Editor visual em tela cheia, com controles laterais, prévia responsiva ao vivo e acesso direto pelo painel do evento.
@@ -57,7 +57,7 @@ Atualizado em 20/09/2026.
     - [x] Cada presente oferece as ações “Presentear” e “Sugestão de compra”.
     - [x] Reserva direta pela vitrine: reutiliza a identificação da sessão ou solicita somente nome e telefone quando necessário.
     - [x] Confirmação de reserva em modal, com ações para continuar escolhendo ou consultar os presentes reservados.
-    - [x] Área Minha participação permite reservar vários presentes, alterar quantidade e cancelar.
+    - [x] Área Minha participação exibe somente reservas ativas e permite liberar integralmente cada reserva após confirmação.
     - [x] Cancelar presença com a opção correspondente cancela também as reservas ativas.
     - [x] Duas reservas concorrentes validadas em processos e conexões separados sobre SQLite persistente isolado.
 - [x] Etapa 6 — painel operacional e suspensão administrativa.
@@ -72,6 +72,18 @@ Atualizado em 20/09/2026.
     - [x] README com preparação no Mac, demonstração, substituição dos dados, backup/restauração e checklist de produção sem publicação.
     - [x] Suíte integrada, análise estática, TypeScript, formatter/linter e build executados.
     - [x] Navegação, aparência, editor e fluxos de convidado inspecionados em Chrome real a 360 px e 1440 px.
+- [x] Etapa 8 — expansão de temas, privacidade pública e reorganização operacional.
+    - [x] Catálogo reutilizável com 20 temas funcionais: quatro opções distintas para cada um dos cinco tipos de evento.
+    - [x] Escolha e prévia fiel do tema na criação, com validação entre categoria e tema.
+    - [x] Troca e restauração do tema no editor mediante confirmação clara do que será substituído.
+    - [x] Tipografia, composição de capa, decoração, cartões e botões variam por tema, além das paletas.
+    - [x] Banner e background independentes, com upload, substituição, remoção, preenchimento, posição e sobreposição ajustável.
+    - [x] Nova seção ordenável “Quem já confirmou”, desativada por padrão e sem envio dos nomes quando oculta.
+    - [x] “Meus presentes” simplificado para reservas ativas, com foto, quantidade informativa, cancelamento integral confirmado e retorno explícito ao convite.
+    - [x] Presentes esgotados aparecem depois dos disponíveis, preservando a ordem de cada grupo, com selo e botão “Já reservado”.
+    - [x] Navegação principal separada em Visão geral, Eventos, Presentes e Convidados.
+    - [x] Áreas de Presentes e Convidados com seletor seguro de evento, seleção automática quando há apenas um e contexto preservado por URL.
+    - [x] Isolamento entre organizadores validado também contra manipulação do parâmetro de evento.
 
 ## Validações executadas
 
@@ -86,11 +98,15 @@ Atualizado em 20/09/2026.
 - Final da Etapa 5 com concorrência multiprocesso: `php artisan test --compact` — 98 testes, 597 asserções, todos aprovados.
 - Final da Etapa 6: `php artisan test --compact` — 107 testes, 690 asserções, todos aprovados.
 - Validação integrada da Etapa 7: `php artisan test --compact` — 108 testes, 701 asserções, todos aprovados.
+- Validação integrada da Etapa 8: `php artisan test --compact` — 125 testes, 866 asserções, todos aprovados.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
 - Checker de formato/lint em 81 arquivos de frontend e documentação em escopo — aprovado.
 - `npm run build` — aprovado; o aviso opcional sobre `fontaine` não impede o build.
+- `npm run types:check` — aprovado após as novas telas e tokens visuais.
+- `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros após a Etapa 8.
+- `vp check` nos nove arquivos de frontend alterados — aprovado sem avisos ou erros.
 - Rotas CRUD, prévia, publicação, encerramento e reabertura conferidas com `php artisan route:list`.
 - Rotas de aparência, identificação e presença conferidas com `php artisan route:list`.
 - Rotas operacionais de convidados e rotas administrativas de usuários/eventos conferidas com `php artisan route:list`.
@@ -115,6 +131,10 @@ Atualizado em 20/09/2026.
 - A administração não oferece impersonação; contas administrativas não aparecem na lista suspensível de organizadores.
 - A demonstração é criada somente para organizadores existentes em ambiente local/teste, não contém senha fixa e preserva dados anteriores em novas execuções.
 - O contador regressivo renderiza marcadores determinísticos durante SSR e começa a calcular após a hidratação, evitando divergência entre servidor e navegador.
+- Os presets dos temas ficam centralizados em um catálogo de domínio; a página pública e os cartões de prévia consomem os mesmos tokens visuais.
+- A troca/restauração de tema redefine somente aparência e imagens; seções, dados do evento, presentes, convidados e reservas permanecem intactos.
+- A lista pública de confirmados é consultada e serializada somente quando sua seção está habilitada.
+- O contexto das áreas operacionais usa o identificador do evento na query string, sempre resolvido dentro dos eventos do organizador autenticado.
 
 ## Pendências conhecidas
 

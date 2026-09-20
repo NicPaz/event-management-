@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, LayoutGrid, ShieldCheck, Users } from 'lucide-react';
+import {
+    CalendarDays,
+    Gift,
+    LayoutGrid,
+    ShieldCheck,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -17,10 +23,21 @@ import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminEventsIndex } from '@/routes/admin/events';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as eventsIndex } from '@/routes/events';
+import { index as giftsIndex } from '@/routes/gifts';
+import { index as guestsIndex } from '@/routes/guests';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const page = usePage();
+    const { auth } = page.props;
+    const selectedEvent = new URL(
+        page.url,
+        'https://celebra.local',
+    ).searchParams.get('event');
+    const contextOptions =
+        selectedEvent === null
+            ? undefined
+            : { query: { event: selectedEvent } };
     const mainNavItems: NavItem[] = [
         {
             title: 'Visão geral',
@@ -31,9 +48,19 @@ export function AppSidebar() {
 
     if (auth.user.role === 'organizer') {
         mainNavItems.push({
-            title: 'Meus eventos',
+            title: 'Eventos',
             href: eventsIndex(),
             icon: CalendarDays,
+        });
+        mainNavItems.push({
+            title: 'Presentes',
+            href: giftsIndex(contextOptions),
+            icon: Gift,
+        });
+        mainNavItems.push({
+            title: 'Convidados',
+            href: guestsIndex(contextOptions),
+            icon: Users,
         });
     }
 
