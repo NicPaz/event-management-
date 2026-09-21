@@ -20,6 +20,31 @@ export const fontStack = (fontPair: string) => {
     return stacks[fontPair] ?? stacks.classic;
 };
 
+export const eventUiStyle = (
+    theme: EventTheme,
+): CSSProperties & Record<`--${string}`, string> => ({
+    '--event-title-font': fontStack(theme.titleFont),
+    '--background': theme.backgroundColor,
+    '--foreground': theme.textColor,
+    '--card': theme.surfaceColor,
+    '--card-foreground': theme.textColor,
+    '--popover': theme.surfaceColor,
+    '--popover-foreground': theme.textColor,
+    '--primary': theme.accentColor,
+    '--primary-foreground': '#FFFFFF',
+    '--secondary': theme.surfaceColor,
+    '--secondary-foreground': theme.textColor,
+    '--muted': theme.surfaceColor,
+    '--muted-foreground': theme.textColor,
+    '--accent': theme.borderColor,
+    '--accent-foreground': theme.textColor,
+    '--border': theme.borderColor,
+    '--input': theme.borderColor,
+    '--ring': theme.accentColor,
+    color: theme.textColor,
+    fontFamily: fontStack(theme.bodyFont),
+});
+
 export const decorationBackground = (
     theme: VisualTheme,
 ): CSSProperties['backgroundImage'] => {

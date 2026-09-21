@@ -13,6 +13,7 @@ import {
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
 import EventThemeController from '@/actions/App/Http/Controllers/EventThemeController';
 import EventInvitation from '@/components/event-invitation';
+import { CelebreLogo } from '@/components/celebre-logo';
 import InputError from '@/components/input-error';
 import ThemePreview from '@/components/theme-preview';
 import { fontStack } from '@/lib/event-theme';
@@ -250,8 +251,8 @@ export default function EventAppearance({
     return (
         <>
             <Head title={`Aparência de ${event.title}`} />
-            <div className="bg-muted fixed inset-0 z-50 flex min-h-0 flex-col">
-                <div className="bg-background flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2 sm:px-5">
+            <div className="bg-background fixed inset-0 z-50 flex min-h-0 flex-col">
+                <div className="bg-card border-primary/10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2 shadow-sm sm:px-5">
                     <div className="flex min-w-0 items-center gap-3">
                         <Button asChild variant="ghost" size="icon">
                             <Link
@@ -261,8 +262,13 @@ export default function EventAppearance({
                                 <ArrowLeft />
                             </Link>
                         </Button>
+                        <CelebreLogo
+                            variant="symbol"
+                            decorative
+                            className="hidden size-9 sm:block"
+                        />
                         <div className="min-w-0">
-                            <h1 className="truncate font-semibold">
+                            <h1 className="truncate font-serif text-lg">
                                 Personalizar {event.title}
                             </h1>
                             <p className="text-muted-foreground hidden text-xs sm:block">
@@ -499,7 +505,7 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_fill'],
                                                 )
                                             }
-                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="cover">
                                                 Cobrir a área
@@ -525,7 +531,7 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_position'],
                                                 )
                                             }
-                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="top">Topo</option>
                                             <option value="center">
@@ -554,7 +560,7 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_overlay'],
                                                 )
                                             }
-                                            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="light">Clara</option>
                                             <option value="dark">Escura</option>
@@ -660,7 +666,7 @@ export default function EventAppearance({
                                                     .value as AppearanceFormData['banner_position'],
                                             )
                                         }
-                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                     >
                                         <option value="top">Topo</option>
                                         <option value="center">Centro</option>

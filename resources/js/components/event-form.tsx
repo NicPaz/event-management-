@@ -6,6 +6,7 @@ import ThemePreview from '@/components/theme-preview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Dialog,
     DialogContent,
@@ -78,7 +79,7 @@ export default function EventForm({
                                     onChange={(inputEvent) =>
                                         changeEventType(inputEvent.target.value)
                                     }
-                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                 >
                                     {eventTypes.map((type) => (
                                         <option
@@ -209,13 +210,12 @@ export default function EventForm({
                                 <Label htmlFor="welcome_text">
                                     Mensagem de boas-vindas
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="welcome_text"
                                     name="welcome_text"
                                     defaultValue={event?.welcomeText ?? ''}
                                     rows={4}
                                     maxLength={5000}
-                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-3"
                                 />
                                 <InputError message={errors.welcome_text} />
                             </div>
@@ -224,13 +224,12 @@ export default function EventForm({
                                 <Label htmlFor="instructions">
                                     Orientações
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="instructions"
                                     name="instructions"
                                     defaultValue={event?.instructions ?? ''}
                                     rows={4}
                                     maxLength={5000}
-                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-3"
                                 />
                                 <InputError message={errors.instructions} />
                             </div>

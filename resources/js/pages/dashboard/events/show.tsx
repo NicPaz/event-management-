@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Check, Copy, Gift, Palette, Users } from 'lucide-react';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
+import { PageHeader } from '@/components/celebre/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,68 +53,66 @@ export default function EventShow({
             <Head title={event.title} />
 
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            {event.title}
-                        </h1>
-                        <p className="text-muted-foreground text-sm">
-                            Acompanhe o evento, compartilhe o convite e
-                            personalize a página pública.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline">
-                            {statusLabels[event.status]}
-                        </Badge>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            disabled={event.publicUrl === null}
-                            title={
-                                event.publicUrl === null
-                                    ? 'Publique o evento para liberar o link'
-                                    : undefined
-                            }
-                            onClick={() => {
-                                if (event.publicUrl !== null) {
-                                    void copy(event.publicUrl);
+                <PageHeader
+                    eyebrow="Seu evento"
+                    title={event.title}
+                    description="Acompanhe o evento, compartilhe o convite e personalize a página pública."
+                    actions={
+                        <>
+                            <Badge variant="outline">
+                                {statusLabels[event.status]}
+                            </Badge>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={event.publicUrl === null}
+                                title={
+                                    event.publicUrl === null
+                                        ? 'Publique o evento para liberar o link'
+                                        : undefined
                                 }
-                            }}
-                        >
-                            {linkWasCopied ? <Check /> : <Copy />}
-                            {linkWasCopied ? 'Link copiado' : 'Copiar link'}
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link
-                                href={EventAppearanceController.edit(event.id)}
+                                onClick={() => {
+                                    if (event.publicUrl !== null) {
+                                        void copy(event.publicUrl);
+                                    }
+                                }}
                             >
-                                <Palette /> Personalizar
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link
-                                href={giftsIndex({
-                                    query: { event: event.id },
-                                })}
-                            >
-                                <Gift /> Presentes
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link
-                                href={guestsIndex({
-                                    query: { event: event.id },
-                                })}
-                            >
-                                <Users /> Convidados
-                            </Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href={edit(event.id)}>Editar</Link>
-                        </Button>
-                    </div>
-                </div>
+                                {linkWasCopied ? <Check /> : <Copy />}
+                                {linkWasCopied ? 'Link copiado' : 'Copiar link'}
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link
+                                    href={EventAppearanceController.edit(
+                                        event.id,
+                                    )}
+                                >
+                                    <Palette /> Personalizar
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link
+                                    href={giftsIndex({
+                                        query: { event: event.id },
+                                    })}
+                                >
+                                    <Gift /> Presentes
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link
+                                    href={guestsIndex({
+                                        query: { event: event.id },
+                                    })}
+                                >
+                                    <Users /> Convidados
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={edit(event.id)}>Editar</Link>
+                            </Button>
+                        </>
+                    }
+                />
 
                 <Card>
                     <CardHeader>

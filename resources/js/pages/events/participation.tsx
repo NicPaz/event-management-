@@ -1,11 +1,11 @@
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Gift } from 'lucide-react';
 import GuestAttendanceController from '@/actions/App/Http/Controllers/GuestAttendanceController';
 import GuestIdentityController from '@/actions/App/Http/Controllers/GuestIdentityController';
 import GiftReservationController from '@/actions/App/Http/Controllers/GiftReservationController';
 import InputError from '@/components/input-error';
-import { fontStack } from '@/lib/event-theme';
+import { eventUiStyle } from '@/lib/event-theme';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -61,11 +61,9 @@ export default function Participation({
         'confirmed' | 'declined' | null
     >(null);
     const [giftToCancel, setGiftToCancel] = useState<ReservedGift | null>(null);
-    const pageStyle: CSSProperties & { '--event-title-font': string } = {
-        '--event-title-font': fontStack(event.theme.titleFont),
+    const pageStyle = {
+        ...eventUiStyle(event.theme),
         backgroundColor: event.theme.backgroundColor,
-        color: event.theme.textColor,
-        fontFamily: fontStack(event.theme.bodyFont),
     };
 
     return (
@@ -480,7 +478,7 @@ export default function Participation({
                 open={giftToCancel !== null}
                 onOpenChange={(open) => !open && setGiftToCancel(null)}
             >
-                <DialogContent>
+                <DialogContent className="event-typography" style={pageStyle}>
                     <DialogHeader>
                         <DialogTitle>Cancelar reserva?</DialogTitle>
                         <DialogDescription>

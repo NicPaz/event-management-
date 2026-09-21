@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { CalendarCheck, CalendarDays, ShieldAlert, Users } from 'lucide-react';
+import { PageHeader } from '@/components/celebre/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboard } from '@/routes/admin';
 import { index as adminEventsIndex } from '@/routes/admin/events';
@@ -33,14 +34,11 @@ export default function AdminDashboard({ metrics }: { metrics: Metrics }) {
             <Head title="Administração" />
 
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Administração
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Indicadores globais sem acesso por impersonação.
-                    </p>
-                </div>
+                <PageHeader
+                    eyebrow="Celebre"
+                    title="Administração"
+                    description="Indicadores globais e controles da plataforma, sem acesso por impersonação."
+                />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {cards.map((card) => (
@@ -49,7 +47,9 @@ export default function AdminDashboard({ metrics }: { metrics: Metrics }) {
                                 <CardTitle className="text-sm font-medium">
                                     {card.label}
                                 </CardTitle>
-                                <card.icon className="text-muted-foreground size-4" />
+                                <span className="bg-brand-soft text-primary flex size-9 items-center justify-center rounded-xl">
+                                    <card.icon className="size-4" />
+                                </span>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-3xl font-semibold tabular-nums">

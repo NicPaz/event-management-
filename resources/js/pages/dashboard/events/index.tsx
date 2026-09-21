@@ -1,5 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { CalendarDays } from 'lucide-react';
+import { EmptyState } from '@/components/celebre/empty-state';
+import { PageHeader } from '@/components/celebre/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,34 +35,30 @@ export default function EventsIndex({ events }: { events: EventSummary[] }) {
             <Head title="Meus eventos" />
 
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            Meus eventos
-                        </h1>
-                        <p className="text-muted-foreground text-sm">
-                            Cada conta acessa somente os eventos que organiza.
-                        </p>
-                    </div>
-                    <Button asChild>
-                        <Link href={create()}>Criar evento</Link>
-                    </Button>
-                </div>
+                <PageHeader
+                    eyebrow="Organização"
+                    title="Meus eventos"
+                    description="Crie, publique e acompanhe todas as suas celebrações."
+                    actions={
+                        <Button asChild>
+                            <Link href={create()}>Criar evento</Link>
+                        </Button>
+                    }
+                />
 
                 {events.length === 0 ? (
-                    <Card className="border-dashed">
-                        <CardContent className="flex min-h-56 flex-col items-center justify-center gap-3 text-center">
-                            <CalendarDays className="text-muted-foreground size-10" />
-                            <div className="flex flex-col gap-1">
-                                <p className="font-medium">
-                                    Você ainda não criou eventos
-                                </p>
-                                <p className="text-muted-foreground text-sm">
-                                    Crie seu primeiro rascunho para começar.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        icon={CalendarDays}
+                        title="Você ainda não criou eventos"
+                        description="Crie seu primeiro convite e personalize cada detalhe da celebração."
+                        action={
+                            <Button asChild>
+                                <Link href={create()}>
+                                    Criar meu primeiro evento
+                                </Link>
+                            </Button>
+                        }
+                    />
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {events.map((event) => (

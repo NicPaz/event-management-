@@ -1,6 +1,8 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { CalendarDays, Search } from 'lucide-react';
 import SuspendedEventController from '@/actions/App/Http/Controllers/Admin/SuspendedEventController';
+import { EmptyState } from '@/components/celebre/empty-state';
+import { PageHeader } from '@/components/celebre/page-header';
 import { Pagination, type PaginationLink } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,15 +37,11 @@ export default function AdminEvents({
         <>
             <Head title="Eventos da plataforma" />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold">
-                        Eventos da plataforma
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Consulte eventos e suspenda páginas públicas quando
-                        necessário.
-                    </p>
-                </div>
+                <PageHeader
+                    eyebrow="Administração"
+                    title="Eventos da plataforma"
+                    description="Consulte eventos e suspenda páginas públicas quando necessário."
+                />
 
                 <Card>
                     <CardContent className="pt-6">
@@ -135,10 +133,11 @@ export default function AdminEvents({
                 </div>
 
                 {events.data.length === 0 && (
-                    <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-                        <CalendarDays className="size-8" />
-                        <p>Nenhum evento encontrado.</p>
-                    </div>
+                    <EmptyState
+                        icon={CalendarDays}
+                        title="Nenhum evento encontrado"
+                        description="Ajuste a busca para encontrar outro evento."
+                    />
                 )}
 
                 <Pagination links={events.links} />

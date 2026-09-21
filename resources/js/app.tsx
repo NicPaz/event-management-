@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Celebra';
+const appName = 'Celebre';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -34,7 +34,7 @@ void createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#5938B8',
     },
 });
 

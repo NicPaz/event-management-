@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { eventUiStyle } from '@/lib/event-theme';
 import { participation } from '@/routes/public/events';
 import type {
     EventGift,
@@ -59,6 +60,7 @@ export default function PublicEventShow({
     const identityErrors = identityForm.errors as typeof identityForm.errors & {
         identity?: string;
     };
+    const guestUiStyle = eventUiStyle(event.theme);
 
     const selectGift = (gift: EventGift) => {
         setReservationError(null);
@@ -163,7 +165,10 @@ export default function PublicEventShow({
                 }
                 onOpenChange={(open) => !open && closeCheckout()}
             >
-                <DialogContent>
+                <DialogContent
+                    className="event-typography"
+                    style={guestUiStyle}
+                >
                     <DialogHeader>
                         <DialogTitle>Quem está presenteando?</DialogTitle>
                         <DialogDescription>
@@ -240,7 +245,10 @@ export default function PublicEventShow({
                 open={reservedGift !== null}
                 onOpenChange={(open) => !open && setReservedGift(null)}
             >
-                <DialogContent>
+                <DialogContent
+                    className="event-typography"
+                    style={guestUiStyle}
+                >
                     <DialogHeader className="items-center text-center sm:text-center">
                         <CircleCheck className="size-12 text-emerald-600" />
                         <DialogTitle>Presente reservado!</DialogTitle>
@@ -274,7 +282,10 @@ export default function PublicEventShow({
                 open={reservationError !== null}
                 onOpenChange={(open) => !open && closeCheckout()}
             >
-                <DialogContent>
+                <DialogContent
+                    className="event-typography"
+                    style={guestUiStyle}
+                >
                     <DialogHeader>
                         <DialogTitle>Não foi possível reservar</DialogTitle>
                         <DialogDescription>

@@ -1,6 +1,8 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Search, Users } from 'lucide-react';
 import SuspendedUserController from '@/actions/App/Http/Controllers/Admin/SuspendedUserController';
+import { EmptyState } from '@/components/celebre/empty-state';
+import { PageHeader } from '@/components/celebre/page-header';
 import { Pagination, type PaginationLink } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,12 +31,11 @@ export default function AdminUsers({
         <>
             <Head title="Organizadores" />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold">Organizadores</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Consulte contas e controle o acesso à plataforma.
-                    </p>
-                </div>
+                <PageHeader
+                    eyebrow="Administração"
+                    title="Organizadores"
+                    description="Consulte contas e controle o acesso à plataforma."
+                />
 
                 <Card>
                     <CardContent className="pt-6">
@@ -78,7 +79,7 @@ export default function AdminUsers({
                                     variant={
                                         user.suspended
                                             ? 'destructive'
-                                            : 'secondary'
+                                            : 'success'
                                     }
                                 >
                                     {user.suspended ? 'Suspensa' : 'Ativa'}
@@ -126,10 +127,11 @@ export default function AdminUsers({
                 </div>
 
                 {users.data.length === 0 && (
-                    <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-                        <Users className="size-8" />
-                        <p>Nenhum organizador encontrado.</p>
-                    </div>
+                    <EmptyState
+                        icon={Users}
+                        title="Nenhum organizador encontrado"
+                        description="Ajuste a busca para encontrar outra conta."
+                    />
                 )}
 
                 <Pagination links={users.links} />

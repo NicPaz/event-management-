@@ -22,24 +22,26 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #fff9f0;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #1d1824;
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        @fonts
+        @unless (in_array($page['component'], ['events/show', 'events/participation'], true))
+            @fonts
+        @endunless
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>Celebre</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

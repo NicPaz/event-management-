@@ -6,6 +6,7 @@ import EventController from '@/actions/App/Http/Controllers/EventController';
 import PublicEventController from '@/actions/App/Http/Controllers/PublicEventController';
 import PublishedEventController from '@/actions/App/Http/Controllers/PublishedEventController';
 import EventForm from '@/components/event-form';
+import { PageHeader } from '@/components/celebre/page-header';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,19 +38,16 @@ export default function EditEvent({
         <>
             <Head title={`Editar ${event.title}`} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            {event.title}
-                        </h1>
-                        <p className="text-muted-foreground text-sm">
-                            Gerencie informações e o estado de publicação.
-                        </p>
-                    </div>
-                    <Badge variant="outline">
-                        {statusLabels[event.status]}
-                    </Badge>
-                </div>
+                <PageHeader
+                    eyebrow="Configuração"
+                    title={event.title}
+                    description="Gerencie informações e o estado de publicação."
+                    actions={
+                        <Badge variant="outline">
+                            {statusLabels[event.status]}
+                        </Badge>
+                    }
+                />
 
                 <Card>
                     <CardHeader>

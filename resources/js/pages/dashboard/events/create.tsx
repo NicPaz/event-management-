@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import EventController from '@/actions/App/Http/Controllers/EventController';
 import EventForm from '@/components/event-form';
+import { PageHeader } from '@/components/celebre/page-header';
 import {
     Card,
     CardContent,
@@ -22,15 +23,11 @@ export default function CreateEvent({
         <>
             <Head title="Criar evento" />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Criar evento
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        O evento começa como rascunho e só fica público quando
-                        você publicar.
-                    </p>
-                </div>
+                <PageHeader
+                    eyebrow="Novo convite"
+                    title="Criar evento"
+                    description="O evento começa como rascunho e só fica público quando você publicar."
+                />
 
                 <Card>
                     <CardHeader>

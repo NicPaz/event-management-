@@ -99,6 +99,14 @@ Atualizado em 20/09/2026.
     - [x] A migration transfere a visibilidade anterior sem publicar listas que estavam ocultas, remove a configuração duplicada e preserva a posição relativa da confirmação.
     - [x] Ocultar a lista mantém a confirmação disponível; ocultar a seção inteira também impede a consulta e o envio público dos nomes.
     - [x] Prévia e convite publicado renderizam uma única lista simples, apenas com nomes dos titulares confirmados.
+- [x] Etapa 11 — identidade visual Celebre.
+    - [x] Paleta e tokens semânticos centralizados no Tailwind, com superfícies em marfim/branco, ações violetas e detalhes laranja/amarelo.
+    - [x] DM Sans e DM Serif Display empacotadas localmente no build, com fallbacks adequados.
+    - [x] Arquivos oficiais de logo e símbolo aplicados em cabeçalhos, autenticação, institucional e navegação compacta; favicons derivados do símbolo.
+    - [x] Componentes compartilhados de cabeçalho, estado vazio, seletor de evento, botões, campos, badges, switches, cartões e modais padronizados.
+    - [x] Identidade aplicada à página institucional, autenticação, painel, eventos, presentes, convidados, administração e barra do editor.
+    - [x] Convites públicos, modais de reserva e Minha participação isolados com os tokens de cada evento, sem herdar a paleta Celebre.
+    - [x] Galeria de componentes reais disponível para administradores e, em desenvolvimento local, para usuários autenticados.
 
 ## Validações executadas
 
@@ -118,6 +126,10 @@ Atualizado em 20/09/2026.
 - Validação integrada da Etapa 9: `php artisan test --compact` — 128 testes, 935 asserções, todos aprovados.
 - Testes focados da Etapa 10: 37 testes e 421 asserções, todos aprovados.
 - Validação integrada da Etapa 10: `php artisan test --compact` — 128 testes, 953 asserções, todos aprovados.
+- Validação integrada da Etapa 11: `php artisan test --compact` — 131 testes, 964 asserções, todos aprovados.
+- Testes focados da Etapa 11: 60 testes e 498 asserções, todos aprovados.
+- `npm run types:check`, `npm run build`, Pint e PHPStan aprovados após a identidade Celebre.
+- Página institucional e autenticação inspecionadas em Chrome headless; convite publicado conferido em desktop e celular, preservando seu tema próprio.
 - `vendor/bin/pint --format agent` — aprovado. A opção `--dirty` não funciona sem Git.
 - `vendor/bin/phpstan analyse --memory-limit=512M` — aprovado sem erros.
 - `npm run types:check` — aprovado.
@@ -159,7 +171,7 @@ Atualizado em 20/09/2026.
 - A troca/restauração de tema redefine somente aparência e imagens; seções, dados do evento, presentes, convidados e reservas permanecem intactos.
 - A lista pública de confirmados é consultada e serializada somente quando a opção interna está ativa e a seção “Confirmação de presença” está habilitada.
 - O contexto das áreas operacionais usa o identificador do evento na query string, sempre resolvido dentro dos eventos do organizador autenticado.
-- A tipografia pública aceita somente chaves do catálogo da aplicação; não recebe CSS nem URLs externas. Instrument Sans é empacotada pelo build e as demais opções usam pilhas locais com fallbacks genéricos.
+- A tipografia pública aceita somente chaves do catálogo da aplicação; não recebe CSS nem URLs externas. As fontes da plataforma DM Sans e DM Serif Display são empacotadas pelo build, enquanto as opções dos convites usam pilhas locais com fallbacks genéricos.
 - O modal de cadastro usa o estado do formulário Inertia para preservar valores em erros e uma trava síncrona adicional ao estado de processamento para evitar cliques duplicados.
 - Arquivos de aparência só são excluídos fisicamente quando pertencem à pasta do evento e não estão mais referenciados por nenhum banner ou background.
 

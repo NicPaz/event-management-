@@ -3,6 +3,7 @@ import {
     CalendarDays,
     Gift,
     LayoutGrid,
+    Palette,
     ShieldCheck,
     Users,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ import { dashboard } from '@/routes';
 import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminEventsIndex } from '@/routes/admin/events';
 import { index as adminUsersIndex } from '@/routes/admin/users';
+import { gallery as brandGallery } from '@/routes/brand';
 import { index as eventsIndex } from '@/routes/events';
 import { index as giftsIndex } from '@/routes/gifts';
 import { index as guestsIndex } from '@/routes/guests';
@@ -80,11 +82,16 @@ export function AppSidebar() {
             href: adminEventsIndex(),
             icon: CalendarDays,
         });
+        mainNavItems.push({
+            title: 'Galeria Celebre',
+            href: brandGallery(),
+            icon: Palette,
+        });
     }
 
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+            <SidebarHeader className="border-sidebar-border/70 border-b pb-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
@@ -96,7 +103,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="pt-4">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

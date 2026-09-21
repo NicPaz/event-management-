@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { Gift, Pencil, Search, Users } from 'lucide-react';
 import EventGuestController from '@/actions/App/Http/Controllers/EventGuestController';
+import { EmptyState } from '@/components/celebre/empty-state';
+import { EventSelector } from '@/components/celebre/event-selector';
+import { PageHeader } from '@/components/celebre/page-header';
 import InputError from '@/components/input-error';
 import { Pagination, type PaginationLink } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +51,13 @@ const statusLabels: Record<GuestStatus, string> = {
     declined: 'Não irá',
 };
 
+const statusVariants: Record<GuestStatus, 'secondary' | 'success' | 'warning'> =
+    {
+        unanswered: 'secondary',
+        confirmed: 'success',
+        declined: 'warning',
+    };
+
 export default function EventGuests({
     event,
     events = [],
@@ -89,83 +99,70 @@ export default function EventGuests({
                 title={event ? `Convidados — ${event.title}` : 'Convidados'}
             />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Convidados</h1>
-                        <p className="text-muted-foreground text-sm">
-                            {event?.title ??
-                                'Selecione um evento para consultar convidados e reservas.'}
-                        </p>
-                    </div>
-                    {event && (
-                        <div className="flex flex-wrap gap-2">
-                            {standalone && (
+                <PageHeader
+                    eyebrow="Organização"
+                    title="Convidados"
+                    description={
+                        event?.title ??
+                        'Selecione um evento para consultar convidados e reservas.'
+                    }
+                    actions={
+                        event && (
+                            <div className="flex flex-wrap gap-2">
+                                {standalone && (
+                                    <Button asChild variant="outline">
+                                        <Link
+                                            href={giftsIndex({
+                                                query: { event: event.id },
+                                            })}
+                                        >
+                                            Ver presentes
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button asChild variant="outline">
-                                    <Link
-                                        href={giftsIndex({
-                                            query: { event: event.id },
-                                        })}
-                                    >
-                                        Ver presentes
+                                    <Link href={eventShow(event.id)}>
+                                        Abrir evento
                                     </Link>
                                 </Button>
-                            )}
-                            <Button asChild variant="outline">
-                                <Link href={eventShow(event.id)}>
-                                    Abrir evento
-                                </Link>
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                            </div>
+                        )
+                    }
+                />
 
                 {standalone && events.length > 0 && (
                     <Card>
                         <CardContent className="grid gap-2 pt-6">
-                            <Label htmlFor="selected-event">
-                                Evento selecionado
-                            </Label>
-                            <select
-                                id="selected-event"
-                                value={event?.id ?? ''}
-                                onChange={(inputEvent) => {
-                                    const value = inputEvent.target.value;
+                            <EventSelector
+                                events={events}
+                                selectedEventId={event?.id ?? null}
+                                onChange={(eventId) => {
                                     router.get(
                                         guestsIndex({
-                                            query: value
-                                                ? { event: Number(value) }
+                                            query: eventId
+                                                ? { event: eventId }
                                                 : {},
                                         }).url,
                                     );
                                 }}
-                                className="border-input h-11 rounded-md border bg-transparent px-3 font-medium"
-                            >
-                                {events.length > 1 && (
-                                    <option value="">
-                                        Selecione um evento
-                                    </option>
-                                )}
-                                {events.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.title}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </CardContent>
                     </Card>
                 )}
 
                 {standalone && events.length === 0 && (
-                    <div className="grid justify-items-center gap-4 rounded-xl border border-dashed p-10 text-center">
-                        <p className="text-muted-foreground">
-                            Você ainda não possui eventos.
-                        </p>
-                        <Button asChild>
-                            <Link href={create()}>
-                                Criar meu primeiro evento
-                            </Link>
-                        </Button>
-                    </div>
+                    <EmptyState
+                        icon={Users}
+                        title="Seus convidados começam com um evento"
+                        description="Crie seu primeiro evento para compartilhar o convite e receber confirmações."
+                        action={
+                            <Button asChild>
+                                <Link href={create()}>
+                                    Criar meu primeiro evento
+                                </Link>
+                            </Button>
+                        }
+                    />
                 )}
 
                 {standalone && events.length > 1 && event === null && (
@@ -264,7 +261,13 @@ export default function EventGuests({
                                                     {guest.phone}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <Badge variant="outline">
+                                                    <Badge
+                                                        variant={
+                                                            statusVariants[
+                                                                guest.status
+                                                            ]
+                                                        }
+                                                    >
                                                         {
                                                             statusLabels[
                                                                 guest.status
@@ -325,7 +328,13 @@ export default function EventGuests({
                                                 <Pencil />
                                             </Button>
                                             <div className="col-span-2 flex flex-wrap items-center gap-2 text-xs">
-                                                <Badge variant="outline">
+                                                <Badge
+                                                    variant={
+                                                        statusVariants[
+                                                            guest.status
+                                                        ]
+                                                    }
+                                                >
                                                     {statusLabels[guest.status]}
                                                 </Badge>
                                                 <span className="text-muted-foreground">
@@ -347,14 +356,19 @@ export default function EventGuests({
                             </div>
                         )}
                         {guests.data.length === 0 && (
-                            <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-                                <Users className="size-8" />
-                                <p>
-                                    {filters.search
-                                        ? 'Nenhum convidado encontrado para esta busca.'
-                                        : 'Nenhum convidado identificado ainda.'}
-                                </p>
-                            </div>
+                            <EmptyState
+                                icon={Users}
+                                title={
+                                    filters.search
+                                        ? 'Nenhum resultado encontrado'
+                                        : 'Nenhum convidado identificado'
+                                }
+                                description={
+                                    filters.search
+                                        ? 'Tente buscar por outro nome ou telefone.'
+                                        : 'Os convidados aparecerão aqui depois que acessarem o convite.'
+                                }
+                            />
                         )}
                         <Pagination links={guests.links} />
 
@@ -456,7 +470,7 @@ function GuestEditDialog({
                                         id={`status-${guest.id}`}
                                         name="status"
                                         defaultValue={guest.status}
-                                        className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                     >
                                         <option value="unanswered">
                                             Sem resposta

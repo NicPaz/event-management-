@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Form, Head, Link, router, useForm } from '@inertiajs/react';
-import { ImageIcon, Plus } from 'lucide-react';
+import { Gift, ImageIcon, Plus } from 'lucide-react';
 import GiftController from '@/actions/App/Http/Controllers/GiftController';
+import { EmptyState } from '@/components/celebre/empty-state';
+import { EventSelector } from '@/components/celebre/event-selector';
+import { PageHeader } from '@/components/celebre/page-header';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Dialog,
     DialogContent,
@@ -51,81 +55,70 @@ export default function Gifts({
         <>
             <Head title={event ? `Presentes — ${event.title}` : 'Presentes'} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Presentes</h1>
-                        <p className="text-muted-foreground text-sm">
-                            {event?.title ??
-                                'Selecione um evento para gerenciar sua lista.'}
-                        </p>
-                    </div>
-                    {event && (
-                        <div className="flex flex-wrap gap-2">
-                            {standalone && (
+                <PageHeader
+                    eyebrow="Organização"
+                    title="Presentes"
+                    description={
+                        event?.title ??
+                        'Selecione um evento para gerenciar sua lista.'
+                    }
+                    actions={
+                        event && (
+                            <div className="flex flex-wrap gap-2">
+                                {standalone && (
+                                    <Button asChild variant="outline">
+                                        <Link
+                                            href={guestsIndex({
+                                                query: { event: event.id },
+                                            })}
+                                        >
+                                            Ver convidados
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button asChild variant="outline">
-                                    <Link
-                                        href={guestsIndex({
-                                            query: { event: event.id },
-                                        })}
-                                    >
-                                        Ver convidados
+                                    <Link href={edit(event.id)}>
+                                        Abrir evento
                                     </Link>
                                 </Button>
-                            )}
-                            <Button asChild variant="outline">
-                                <Link href={edit(event.id)}>Abrir evento</Link>
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                            </div>
+                        )
+                    }
+                />
 
                 {standalone && events.length > 0 && (
                     <Card>
                         <CardContent className="grid gap-2 pt-6">
-                            <Label htmlFor="selected-event">
-                                Evento selecionado
-                            </Label>
-                            <select
-                                id="selected-event"
-                                value={event?.id ?? ''}
-                                onChange={(inputEvent) => {
-                                    const value = inputEvent.target.value;
+                            <EventSelector
+                                events={events}
+                                selectedEventId={event?.id ?? null}
+                                onChange={(eventId) => {
                                     router.get(
                                         giftsIndex({
-                                            query: value
-                                                ? { event: Number(value) }
+                                            query: eventId
+                                                ? { event: eventId }
                                                 : {},
                                         }).url,
                                     );
                                 }}
-                                className="border-input h-11 rounded-md border bg-transparent px-3 font-medium"
-                            >
-                                {events.length > 1 && (
-                                    <option value="">
-                                        Selecione um evento
-                                    </option>
-                                )}
-                                {events.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.title}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </CardContent>
                     </Card>
                 )}
 
                 {standalone && events.length === 0 && (
-                    <div className="grid justify-items-center gap-4 rounded-xl border border-dashed p-10 text-center">
-                        <p className="text-muted-foreground">
-                            Você ainda não possui eventos.
-                        </p>
-                        <Button asChild>
-                            <Link href={create()}>
-                                Criar meu primeiro evento
-                            </Link>
-                        </Button>
-                    </div>
+                    <EmptyState
+                        icon={Gift}
+                        title="Sua primeira lista começa com um evento"
+                        description="Crie um evento para cadastrar presentes e receber reservas."
+                        action={
+                            <Button asChild>
+                                <Link href={create()}>
+                                    Criar meu primeiro evento
+                                </Link>
+                            </Button>
+                        }
+                    />
                 )}
 
                 {standalone && events.length > 1 && event === null && (
@@ -269,14 +262,13 @@ export default function Gifts({
                                                             <Label>
                                                                 Descrição
                                                             </Label>
-                                                            <textarea
+                                                            <Textarea
                                                                 name="description"
                                                                 defaultValue={
                                                                     gift.description ??
                                                                     ''
                                                                 }
                                                                 rows={3}
-                                                                className="rounded-md border bg-transparent p-3 text-sm"
                                                             />
                                                         </div>
                                                         <Button
@@ -307,9 +299,13 @@ export default function Gifts({
                                 </Card>
                             ))}
                             {gifts.length === 0 && (
-                                <p className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm lg:col-span-2">
-                                    Nenhum presente cadastrado.
-                                </p>
+                                <div className="lg:col-span-2">
+                                    <EmptyState
+                                        icon={Gift}
+                                        title="Nenhum presente cadastrado"
+                                        description="Use o botão Adicionar presente para começar sua lista."
+                                    />
+                                </div>
                             )}
                         </div>
                     </>
@@ -518,7 +514,7 @@ function AddGiftDialog({ event }: { event: EventOption }) {
                                 <Label htmlFor="new-gift-description">
                                     Descrição
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="new-gift-description"
                                     rows={4}
                                     value={form.data.description}
@@ -529,7 +525,6 @@ function AddGiftDialog({ event }: { event: EventOption }) {
                                         )
                                     }
                                     maxLength={5000}
-                                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 min-h-24 rounded-md border bg-transparent p-3 text-sm outline-none focus-visible:ring-3"
                                 />
                                 <InputError message={form.errors.description} />
                             </div>

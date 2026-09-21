@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\SuspendedEventController as AdminSuspendedEventController;
 use App\Http\Controllers\Admin\SuspendedUserController as AdminSuspendedUserController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\BrandGalleryController;
 use App\Http\Controllers\ClosedEventController;
 use App\Http\Controllers\EventAppearanceController;
 use App\Http\Controllers\EventController;
@@ -44,6 +45,7 @@ Route::delete('e/{event:slug}/presentes/{gift}/reserva', [GiftReservationControl
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('brand-gallery', BrandGalleryController::class)->name('brand.gallery');
     Route::get('dashboard/events/{event}/preview', [PublicEventController::class, 'preview'])->name('events.preview');
     Route::get('dashboard/events/{event}/appearance', [EventAppearanceController::class, 'edit'])->name('events.appearance.edit');
     Route::post('dashboard/events/{event}/appearance', [EventAppearanceController::class, 'update'])->name('events.appearance.update');
