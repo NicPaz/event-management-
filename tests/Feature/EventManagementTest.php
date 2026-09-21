@@ -36,7 +36,10 @@ test('organizers create draft events with local time stored in UTC', function ()
     $response = $this->actingAs($organizer)->post(route('events.store'), validEventPayload());
 
     $event = Event::query()->sole();
-    $response->assertRedirectToRoute('events.edit', $event);
+    $response->assertRedirect(route('events.gifts.index', [
+        'event' => $event,
+        'creation' => 1,
+    ]));
     expect($event->user_id)->toBe($organizer->id)
         ->and($event->status)->toBe(EventStatus::Draft)
         ->and($event->timezone)->toBe('America/Sao_Paulo')
@@ -62,7 +65,7 @@ test('event creation ignores protected ownership and publication fields', functi
         ->and($event->published_at)->toBeNull();
 });
 
-test('event creation validates required fields without requiring coordinates or timezone', function () {
+test('event creation validates required information without requiring coordinates or timezone', function () {
     $organizer = User::factory()->create();
 
     $response = $this->actingAs($organizer)->post(route('events.store'), [
@@ -71,7 +74,7 @@ test('event creation validates required fields without requiring coordinates or 
         'longitude' => 'inválida',
     ]);
 
-    $response->assertSessionHasErrors(['title', 'type'])
+    $response->assertSessionHasErrors(['title', 'type', 'starts_at', 'venue_name', 'address'])
         ->assertSessionDoesntHaveErrors(['timezone', 'latitude', 'longitude']);
     $this->assertDatabaseEmpty('events');
 });

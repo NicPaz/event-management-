@@ -49,6 +49,9 @@ test('event creation applies a theme from the selected category', function () {
         'title' => 'Nossa casa',
         'type' => EventType::Housewarming->value,
         'theme_key' => 'housewarming-sage',
+        'starts_at' => '2026-12-20T18:30',
+        'venue_name' => 'Casa da família',
+        'address' => 'Rua das Flores, 100',
         'timezone' => 'America/Sao_Paulo',
     ])->assertRedirect();
 
@@ -65,6 +68,9 @@ test('event creation rejects a theme from another category', function () {
         'title' => 'Nosso casamento',
         'type' => EventType::Wedding->value,
         'theme_key' => 'birthday-retro',
+        'starts_at' => '2026-12-20T18:30',
+        'venue_name' => 'Salão de festas',
+        'address' => 'Rua das Flores, 100',
         'timezone' => 'America/Sao_Paulo',
     ])->assertSessionHasErrors('theme_key');
 

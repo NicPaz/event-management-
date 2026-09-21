@@ -73,8 +73,10 @@ class UpdateEventAppearance
                 $event->sections()->delete();
                 $event->sections()->createMany($this->sectionRecords($attributes['sections'] ?? null));
 
-                $event->paletteItems()->delete();
-                $event->paletteItems()->createMany($this->paletteRecords($attributes['palette_items'] ?? null));
+                if (array_key_exists('palette_items', $attributes)) {
+                    $event->paletteItems()->delete();
+                    $event->paletteItems()->createMany($this->paletteRecords($attributes['palette_items']));
+                }
             });
         } catch (Throwable $exception) {
             Storage::disk('public')->delete(array_filter([$newBannerPath, $newBackgroundPath]));

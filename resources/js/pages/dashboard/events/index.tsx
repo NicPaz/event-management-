@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { CalendarDays, Eye, Palette, Pencil, Settings } from 'lucide-react';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
-import { preview } from '@/actions/App/Http/Controllers/PublicEventController';
+import GiftController from '@/actions/App/Http/Controllers/GiftController';
 import { EmptyState } from '@/components/celebre/empty-state';
 import { PageHeader } from '@/components/celebre/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ type EventSummary = {
     startsAt: string | null;
     timezone: string;
     bannerUrl: string | null;
+    invitationUrl: string;
 };
 
 const statusLabels: Record<EventSummary['status'], string> = {
@@ -31,6 +32,14 @@ const typeLabels: Record<string, string> = {
     wedding: 'Casamento',
     birthday: 'Aniversário',
     other: 'Outro evento',
+};
+
+const defaultCoverByType: Record<string, string> = {
+    housewarming: '/images/event-covers/housewarming.svg',
+    kitchen_tea: '/images/event-covers/kitchen-tea.svg',
+    wedding: '/images/event-covers/wedding.svg',
+    birthday: '/images/event-covers/birthday.svg',
+    other: '/images/event-covers/other.svg',
 };
 
 export default function EventsIndex({ events }: { events: EventSummary[] }) {
@@ -80,6 +89,10 @@ EventsIndex.layout = {
 };
 
 function EventCard({ event }: { event: EventSummary }) {
+    const coverUrl =
+        event.bannerUrl ??
+        defaultCoverByType[event.type] ??
+        defaultCoverByType.other;
     const formattedDate = event.startsAt
         ? new Intl.DateTimeFormat('pt-BR', {
               dateStyle: 'medium',
@@ -90,35 +103,19 @@ function EventCard({ event }: { event: EventSummary }) {
 
     return (
         <article className="group relative isolate min-w-0 pb-2">
-            {event.bannerUrl && (
+            <img
+                src={coverUrl}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-4 top-5 -z-10 h-[calc(100%-1.25rem)] w-[calc(100%-2rem)] rounded-[20px] object-cover opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-45 motion-reduce:transition-none"
+            />
+            <div className="bg-primary relative flex min-h-80 overflow-hidden rounded-[20px] border shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none">
                 <img
-                    src={event.bannerUrl}
+                    src={coverUrl}
                     alt=""
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-4 top-5 -z-10 h-[calc(100%-1.25rem)] w-[calc(100%-2rem)] rounded-[20px] object-cover opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-45 motion-reduce:transition-none"
+                    className="absolute inset-0 size-full object-cover"
                 />
-            )}
-            <div className="bg-primary relative flex min-h-80 overflow-hidden rounded-[20px] border shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none">
-                {event.bannerUrl ? (
-                    <img
-                        src={event.bannerUrl}
-                        alt=""
-                        className="absolute inset-0 size-full object-cover"
-                    />
-                ) : (
-                    <div
-                        aria-hidden="true"
-                        className="bg-primary absolute inset-0 overflow-hidden"
-                    >
-                        <div className="bg-brand-orange/35 absolute -top-12 -right-10 size-48 rounded-full" />
-                        <div className="bg-brand-yellow/35 absolute -bottom-16 -left-12 size-56 rounded-full" />
-                        <img
-                            src="/images/brand/celebre-simbolo.png"
-                            alt=""
-                            className="absolute top-1/2 left-1/2 w-28 -translate-x-1/2 -translate-y-1/2 opacity-25"
-                        />
-                    </div>
-                )}
                 <div className="absolute inset-0 bg-black/50" />
 
                 <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-between gap-8 p-5 text-white">
@@ -127,7 +124,15 @@ function EventCard({ event }: { event: EventSummary }) {
                             <span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-medium backdrop-blur-sm">
                                 {typeLabels[event.type] ?? event.type}
                             </span>
-                            <Badge className="text-foreground border-white/25 bg-white/90 hover:bg-white">
+                            <Badge
+                                className={
+                                    event.status === 'published'
+                                        ? 'border-emerald-200/60 bg-emerald-100 text-emerald-900 hover:bg-emerald-100'
+                                        : event.status === 'draft'
+                                          ? 'border-amber-200/60 bg-amber-100 text-amber-900 hover:bg-amber-100'
+                                          : 'text-foreground border-white/25 bg-white/90 hover:bg-white'
+                                }
+                            >
                                 {statusLabels[event.status]}
                             </Badge>
                         </div>
@@ -146,8 +151,20 @@ function EventCard({ event }: { event: EventSummary }) {
                                 size="sm"
                                 className="text-primary bg-white hover:bg-white/90"
                             >
-                                <Link href={show(event.id)} prefetch>
-                                    <Settings /> Gerenciar
+                                <Link
+                                    href={
+                                        event.status === 'draft'
+                                            ? GiftController.index(event.id, {
+                                                  query: { creation: 1 },
+                                              })
+                                            : show(event.id)
+                                    }
+                                    prefetch
+                                >
+                                    <Settings />{' '}
+                                    {event.status === 'draft'
+                                        ? 'Continuar criação'
+                                        : 'Gerenciar'}
                                 </Link>
                             </Button>
                             <Button
@@ -180,7 +197,10 @@ function EventCard({ event }: { event: EventSummary }) {
                                 variant="secondary"
                                 className="bg-white/15 text-white hover:bg-white/25"
                             >
-                                <Link href={preview(event.id)}>
+                                <Link
+                                    href={event.invitationUrl}
+                                    target="_blank"
+                                >
                                     <Eye /> Ver convite
                                 </Link>
                             </Button>

@@ -71,7 +71,7 @@ class UpdateEventAppearanceRequest extends FormRequest
             'sections.*.type' => ['required', 'distinct', Rule::enum(EventSectionType::class)],
             'sections.*.enabled' => ['required', 'boolean'],
             'sections.*.position' => ['required', 'integer', 'between:0,'.(count(EventSectionType::cases()) - 1), 'distinct'],
-            'palette_items' => ['present', 'array', 'max:20'],
+            'palette_items' => ['sometimes', 'array', 'max:20'],
             'palette_items.*.label' => ['required', 'string', 'max:80'],
             'palette_items.*.color_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'palette_items.*.material' => ['nullable', 'string', 'max:80'],

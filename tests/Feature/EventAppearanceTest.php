@@ -131,6 +131,37 @@ test('appearance changes persist and are shared by preview and public page', fun
         ->assertInertia($assertInvitation);
 });
 
+test('inspiration colors are optional and can all be removed', function () {
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+
+    $this->actingAs($organizer)->post(
+        route('events.appearance.update', $event),
+        validAppearancePayload(['palette_items' => []]),
+    )->assertRedirect()->assertSessionHas('success');
+
+    $this->assertDatabaseMissing('event_palette_items', [
+        'event_id' => $event->id,
+    ]);
+
+    $event->paletteItems()->create([
+        'label' => 'Bambu',
+        'color_hex' => '#D2A679',
+        'material' => 'Madeira',
+        'position' => 0,
+    ]);
+
+    $this->actingAs($organizer)->post(
+        route('events.appearance.update', $event),
+        collect(validAppearancePayload())->except('palette_items')->all(),
+    )->assertRedirect()->assertSessionHas('success');
+
+    $this->assertDatabaseHas('event_palette_items', [
+        'event_id' => $event->id,
+        'label' => 'Bambu',
+    ]);
+});
+
 test('typography is validated persisted and shared by invitation and participation', function () {
     $organizer = User::factory()->create();
     $event = Event::factory()->for($organizer)->published()->create();

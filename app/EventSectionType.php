@@ -20,7 +20,7 @@ enum EventSectionType: string
             self::Welcome => 'Boas-vindas',
             self::Information => 'Informações',
             self::Countdown => 'Contagem regressiva',
-            self::Palette => 'Paleta da casa',
+            self::Palette => 'Cores para inspirar os presentes',
             self::Gifts => 'Presentes',
             self::Instructions => 'Orientações',
             self::Rsvp => 'Confirmação de presença',

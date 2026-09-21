@@ -21,6 +21,8 @@ export type EventDetails = {
     slug: string | null;
     type: string;
     status: EventStatus;
+    publicUrl?: string | null;
+    invitationUrl?: string;
     startsAt: string | null;
     startsAtLocal: string | null;
     timezone: string;

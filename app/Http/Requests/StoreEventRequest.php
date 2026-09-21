@@ -47,12 +47,29 @@ class StoreEventRequest extends FormRequest
             'title' => ['required', 'string', 'max:120'],
             'type' => ['required', Rule::enum(EventType::class)],
             'theme_key' => [Rule::requiredIf($this->route('event') === null), 'nullable', 'string', 'max:80'],
-            'starts_at' => ['nullable', 'date_format:Y-m-d\TH:i'],
-            'venue_name' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:500'],
+            'starts_at' => [Rule::requiredIf($this->isCreationStep()), 'date_format:Y-m-d\TH:i'],
+            'venue_name' => [Rule::requiredIf($this->isCreationStep()), 'string', 'max:255'],
+            'address' => [Rule::requiredIf($this->isCreationStep()), 'string', 'max:500'],
             'welcome_text' => ['nullable', 'string', 'max:5000'],
             'instructions' => ['nullable', 'string', 'max:5000'],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'Informe o nome do evento.',
+            'type.required' => 'Selecione o tipo do evento.',
+            'starts_at.required' => 'Informe a data e o horário do evento.',
+            'venue_name.required' => 'Informe o nome do local.',
+            'address.required' => 'Informe o endereço do evento.',
+        ];
+    }
+
+    private function isCreationStep(): bool
+    {
+        return $this->route('event') === null || $this->boolean('creation');
     }
 
     /** @return list<callable(Validator): void> */

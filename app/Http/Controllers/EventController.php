@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Events\ApplyEventTheme;
+use App\EventStatus;
 use App\EventType;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
 use App\RsvpStatus;
-use App\Support\EventThemeCatalog;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,13 +36,12 @@ class EventController extends Controller
         ]);
     }
 
-    public function create(EventThemeCatalog $themes): Response
+    public function create(): Response
     {
         Gate::authorize('create', Event::class);
 
         return Inertia::render('dashboard/events/create', [
             'eventTypes' => $this->eventTypes(),
-            'themeOptions' => collect(EventType::cases())->flatMap($themes->forType(...))->values(),
         ]);
     }
 
@@ -55,7 +54,10 @@ class EventController extends Controller
             return $event;
         });
 
-        return redirect()->route('events.edit', $event)->with('success', 'Evento criado.');
+        return redirect()->route('events.gifts.index', [
+            'event' => $event,
+            'creation' => 1,
+        ])->with('success', 'Informações salvas. Seu evento continua privado.');
     }
 
     public function show(Event $event): Response
@@ -85,19 +87,27 @@ class EventController extends Controller
         ]);
     }
 
-    public function edit(Event $event): Response
+    public function edit(Request $request, Event $event): Response
     {
         Gate::authorize('update', $event);
 
         return Inertia::render('dashboard/events/edit', [
             'event' => $this->eventData($event),
             'eventTypes' => $this->eventTypes(),
+            'creationFlow' => $request->boolean('creation'),
         ]);
     }
 
     public function update(UpdateEventRequest $request, Event $event): RedirectResponse
     {
         $event->update($this->eventAttributes($request, $event));
+
+        if ($request->boolean('creation')) {
+            return redirect()->route('events.gifts.index', [
+                'event' => $event,
+                'creation' => 1,
+            ])->with('success', 'Informações atualizadas.');
+        }
 
         return back()->with('success', 'Evento atualizado.');
     }
@@ -121,7 +131,8 @@ class EventController extends Controller
             'type' => $event->type->value,
             'status' => $event->status->value,
             'slug' => $event->slug,
-            'publicUrl' => $event->slug === null ? null : route('public.events.show', $event->slug),
+            'publicUrl' => $this->publicUrl($event),
+            'invitationUrl' => $this->invitationUrl($event),
             'startsAt' => $event->starts_at?->toIso8601String(),
             'startsAtLocal' => $event->starts_at?->setTimezone($event->timezone)->format('Y-m-d\TH:i'),
             'timezone' => $event->timezone,
@@ -185,5 +196,21 @@ class EventController extends Controller
             fn (EventType $type): array => ['value' => $type->value, 'label' => $labels[$type->value]],
             EventType::cases(),
         );
+    }
+
+    private function publicUrl(Event $event): ?string
+    {
+        if ($event->slug === null
+            || ! in_array($event->status, [EventStatus::Published, EventStatus::Closed], true)
+            || $event->suspended_at !== null) {
+            return null;
+        }
+
+        return route('public.events.show', $event->slug);
+    }
+
+    private function invitationUrl(Event $event): string
+    {
+        return $this->publicUrl($event) ?? route('events.preview', $event);
     }
 }

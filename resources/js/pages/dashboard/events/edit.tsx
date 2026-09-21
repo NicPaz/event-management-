@@ -6,6 +6,7 @@ import EventController from '@/actions/App/Http/Controllers/EventController';
 import PublicEventController from '@/actions/App/Http/Controllers/PublicEventController';
 import PublishedEventController from '@/actions/App/Http/Controllers/PublishedEventController';
 import EventForm from '@/components/event-form';
+import { EventCreationProgress } from '@/components/event-creation-progress';
 import { PageHeader } from '@/components/celebre/page-header';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -30,10 +31,47 @@ const statusLabels = {
 export default function EditEvent({
     event,
     eventTypes,
+    creationFlow = false,
 }: {
     event: EventDetails;
     eventTypes: EventTypeOption[];
+    creationFlow?: boolean;
 }) {
+    if (creationFlow) {
+        return (
+            <>
+                <Head title={`Informações — ${event.title}`} />
+                <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+                    <PageHeader
+                        eyebrow="Criação do evento"
+                        title="Informações do evento"
+                        description="Revise os dados salvos e continue a criação sem gerar outro evento."
+                        actions={
+                            <Button asChild variant="ghost">
+                                <Link href={index()}>Sair do fluxo</Link>
+                            </Button>
+                        }
+                    />
+
+                    <EventCreationProgress currentStep={1} />
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <EventForm
+                                action={EventController.update(event.id, {
+                                    query: { creation: 1 },
+                                })}
+                                event={event}
+                                eventTypes={eventTypes}
+                                submitLabel="Continuar"
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title={`Editar ${event.title}`} />

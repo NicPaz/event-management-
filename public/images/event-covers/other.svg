@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-label="Ilustração abstrata de celebração">
+  <rect width="1200" height="700" fill="#5938B8"/>
+  <circle cx="170" cy="130" r="140" fill="#F47B45"/>
+  <circle cx="1000" cy="540" r="210" fill="#F2C94C"/>
+  <path d="M500 150h200v400H500z" fill="#EDE7FA" transform="rotate(28 600 350)"/>
+  <circle cx="600" cy="350" r="100" fill="#FFF9F0"/>
+  <path d="M600 245v210M495 350h210" stroke="#F47B45" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="340" cy="520" r="22" fill="#FFF9F0"/><circle cx="900" cy="170" r="26" fill="#F47B45"/>
+  <path d="M300 230l25 48 52 7-38 37 9 52-48-25-48 25 9-52-38-37 52-7z" fill="#F2C94C"/>
+</svg>

@@ -9,6 +9,7 @@ use App\Http\Controllers\BrandGalleryController;
 use App\Http\Controllers\ClosedEventController;
 use App\Http\Controllers\EventAppearanceController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventCreationController;
 use App\Http\Controllers\EventGuestController;
 use App\Http\Controllers\EventThemeController;
 use App\Http\Controllers\GiftController;
@@ -47,6 +48,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
     Route::get('brand-gallery', BrandGalleryController::class)->name('brand.gallery');
     Route::get('dashboard/events/{event}/preview', [PublicEventController::class, 'preview'])->name('events.preview');
+    Route::get('dashboard/events/{event}/creation/finalization', [EventCreationController::class, 'show'])->name('events.creation.show');
+    Route::post('dashboard/events/{event}/creation/finalization', [EventCreationController::class, 'store'])->name('events.creation.store');
+    Route::get('dashboard/events/{event}/creation/complete', [EventCreationController::class, 'complete'])->name('events.creation.complete');
     Route::get('dashboard/events/{event}/appearance', [EventAppearanceController::class, 'edit'])->name('events.appearance.edit');
     Route::post('dashboard/events/{event}/appearance', [EventAppearanceController::class, 'update'])->name('events.appearance.update');
     Route::post('dashboard/events/{event}/appearance/theme', [EventThemeController::class, 'update'])->name('events.appearance.theme.update');

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     ArrowDown,
     ArrowLeft,
@@ -11,11 +11,15 @@ import {
     Trash2,
 } from 'lucide-react';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
+import EventCreationController from '@/actions/App/Http/Controllers/EventCreationController';
 import EventThemeController from '@/actions/App/Http/Controllers/EventThemeController';
+import GiftController from '@/actions/App/Http/Controllers/GiftController';
+import { EventCreationProgress } from '@/components/event-creation-progress';
 import EventInvitation from '@/components/event-invitation';
 import { CelebreLogo } from '@/components/celebre-logo';
 import InputError from '@/components/input-error';
 import ThemePreview from '@/components/theme-preview';
+import { UnsavedChangesGuard } from '@/components/unsaved-changes-guard';
 import { fontStack } from '@/lib/event-theme';
 import { Button } from '@/components/ui/button';
 import {
@@ -116,6 +120,7 @@ export default function EventAppearance({
     event,
     themeOptions,
     fontOptions,
+    creationFlow = false,
 }: {
     event: EventInvitationData;
     themeOptions: EventThemeOption[];
@@ -123,6 +128,7 @@ export default function EventAppearance({
         titles: EventFontOption[];
         body: EventFontOption[];
     };
+    creationFlow?: boolean;
 }) {
     const form = useForm<AppearanceFormData>({
         background_color: event.theme.backgroundColor,
@@ -167,6 +173,8 @@ export default function EventAppearance({
     const draggedSection = useRef<number | null>(null);
     const bannerInput = useRef<HTMLInputElement | null>(null);
     const backgroundInput = useRef<HTMLInputElement | null>(null);
+    const continueAfterSave = useRef(false);
+    const navigationBypass = useRef(false);
 
     useEffect(() => {
         if (!form.data.banner) {
@@ -242,21 +250,47 @@ export default function EventAppearance({
 
     const submit = (submitEvent: FormEvent<HTMLFormElement>) => {
         submitEvent.preventDefault();
+        navigationBypass.current = true;
         form.post(EventAppearanceController.update(event.id).url, {
             forceFormData: true,
             preserveScroll: true,
+            onSuccess: () => {
+                form.setDefaults();
+
+                if (continueAfterSave.current) {
+                    router.visit(EventCreationController.show(event.id).url);
+                }
+            },
+            onError: () => {
+                navigationBypass.current = false;
+            },
+            onFinish: () => {
+                if (!continueAfterSave.current) {
+                    navigationBypass.current = false;
+                }
+            },
         });
     };
 
     return (
         <>
             <Head title={`Aparência de ${event.title}`} />
+            <UnsavedChangesGuard
+                when={form.isDirty && !form.processing}
+                bypassRef={navigationBypass}
+            />
             <div className="bg-background fixed inset-0 z-50 flex min-h-0 flex-col">
                 <div className="bg-card border-primary/10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2 shadow-sm sm:px-5">
                     <div className="flex min-w-0 items-center gap-3">
                         <Button asChild variant="ghost" size="icon">
                             <Link
-                                href={show(event.id)}
+                                href={
+                                    creationFlow
+                                        ? GiftController.index(event.id, {
+                                              query: { creation: 1 },
+                                          })
+                                        : show(event.id)
+                                }
                                 aria-label="Voltar ao painel do evento"
                             >
                                 <ArrowLeft />
@@ -269,7 +303,10 @@ export default function EventAppearance({
                         />
                         <div className="min-w-0">
                             <h1 className="truncate font-serif text-lg">
-                                Personalizar {event.title}
+                                {creationFlow
+                                    ? 'Personalização'
+                                    : 'Personalizar'}{' '}
+                                {event.title}
                             </h1>
                             <p className="text-muted-foreground hidden text-xs sm:block">
                                 As alterações aparecem na prévia em tempo real.
@@ -309,19 +346,41 @@ export default function EventAppearance({
                             type="submit"
                             form="appearance-form"
                             disabled={form.processing}
+                            variant={creationFlow ? 'outline' : 'default'}
+                            onClick={() => {
+                                continueAfterSave.current = false;
+                            }}
                         >
                             {form.processing ? 'Salvando...' : 'Salvar'}
                         </Button>
+                        {creationFlow && (
+                            <Button
+                                type="submit"
+                                form="appearance-form"
+                                disabled={form.processing}
+                                onClick={() => {
+                                    continueAfterSave.current = true;
+                                }}
+                            >
+                                {form.processing ? 'Salvando...' : 'Continuar'}
+                            </Button>
+                        )}
                     </div>
                 </div>
+
+                {creationFlow && (
+                    <div className="bg-card shrink-0 border-b px-3 py-3 sm:px-5">
+                        <EventCreationProgress currentStep={3} />
+                    </div>
+                )}
 
                 <form
                     id="appearance-form"
                     onSubmit={submit}
-                    className="grid min-h-0 flex-1 grid-rows-[minmax(16rem,42vh)_minmax(0,1fr)] overflow-hidden md:grid-cols-[24rem_minmax(0,1fr)] md:grid-rows-1"
+                    className="grid min-h-0 flex-1 grid-rows-[minmax(16rem,42vh)_minmax(0,1fr)] md:grid-cols-[24rem_minmax(0,1fr)] md:grid-rows-1"
                 >
                     <div className="bg-background flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-b p-4 md:border-r md:border-b-0">
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Tema visual</CardTitle>
                                 <CardDescription>
@@ -344,6 +403,7 @@ export default function EventAppearance({
                                     <Button
                                         type="button"
                                         variant="outline"
+                                        className="h-auto min-h-11 w-full max-w-full whitespace-normal"
                                         onClick={() =>
                                             setPendingTheme(
                                                 themeOptions.find(
@@ -360,7 +420,7 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Cores do convite</CardTitle>
                                 <CardDescription>
@@ -368,9 +428,12 @@ export default function EventAppearance({
                                     o fundo e os cartões.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-5 sm:grid-cols-2">
+                            <CardContent className="grid min-w-0 gap-5">
                                 {colorFields.map((field) => (
-                                    <div key={field.key} className="grid gap-2">
+                                    <div
+                                        key={field.key}
+                                        className="grid min-w-0 gap-2"
+                                    >
                                         <Label htmlFor={field.key}>
                                             {field.label}
                                         </Label>
@@ -410,7 +473,7 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Tipografia</CardTitle>
                                 <CardDescription>
@@ -420,7 +483,7 @@ export default function EventAppearance({
                                     opções de leitura confortável.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-4 sm:grid-cols-2">
+                            <CardContent className="grid min-w-0 gap-4">
                                 <FontSelect
                                     label="Títulos e destaques"
                                     name="title-font"
@@ -444,7 +507,7 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Imagem de fundo</CardTitle>
                                 <CardDescription>
@@ -453,7 +516,7 @@ export default function EventAppearance({
                                     no desktop.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-5">
+                            <CardContent className="grid min-w-0 gap-5">
                                 <div className="grid gap-2">
                                     <Label htmlFor="background">Imagem</Label>
                                     <Input
@@ -461,6 +524,7 @@ export default function EventAppearance({
                                         ref={backgroundInput}
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
+                                        className="box-border h-auto min-h-11 w-full max-w-full min-w-0 file:mr-2 file:max-w-full file:shrink-0"
                                         onChange={(inputEvent) => {
                                             form.setData(
                                                 'background',
@@ -473,6 +537,11 @@ export default function EventAppearance({
                                             );
                                         }}
                                     />
+                                    {form.data.background && (
+                                        <p className="text-muted-foreground max-w-full min-w-0 text-xs break-all">
+                                            {form.data.background.name}
+                                        </p>
+                                    )}
                                     <InputError
                                         message={form.errors.background}
                                     />
@@ -490,8 +559,8 @@ export default function EventAppearance({
                                         className="h-28 w-full rounded-lg border object-cover"
                                     />
                                 )}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="grid gap-2">
+                                <div className="grid min-w-0 grid-cols-1 gap-4">
+                                    <div className="grid min-w-0 gap-2">
                                         <Label htmlFor="background_fill">
                                             Preenchimento
                                         </Label>
@@ -505,7 +574,7 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_fill'],
                                                 )
                                             }
-                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card box-border h-11 w-full max-w-full min-w-0 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="cover">
                                                 Cobrir a área
@@ -515,7 +584,7 @@ export default function EventAppearance({
                                             </option>
                                         </select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid min-w-0 gap-2">
                                         <Label htmlFor="background_position">
                                             Posição
                                         </Label>
@@ -531,7 +600,7 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_position'],
                                                 )
                                             }
-                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card box-border h-11 w-full max-w-full min-w-0 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="top">Topo</option>
                                             <option value="center">
@@ -546,7 +615,7 @@ export default function EventAppearance({
                                             </option>
                                         </select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid min-w-0 gap-2">
                                         <Label htmlFor="background_overlay">
                                             Sobreposição
                                         </Label>
@@ -560,13 +629,13 @@ export default function EventAppearance({
                                                         .value as AppearanceFormData['background_overlay'],
                                                 )
                                             }
-                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                            className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card box-border h-11 w-full max-w-full min-w-0 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                         >
                                             <option value="light">Clara</option>
                                             <option value="dark">Escura</option>
                                         </select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="grid min-w-0 gap-2">
                                         <Label htmlFor="background_overlay_opacity">
                                             Intensidade:{' '}
                                             {
@@ -592,6 +661,7 @@ export default function EventAppearance({
                                                     ),
                                                 )
                                             }
+                                            className="box-border max-w-full min-w-0"
                                         />
                                     </div>
                                 </div>
@@ -622,7 +692,7 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Banner</CardTitle>
                                 <CardDescription>
@@ -630,7 +700,7 @@ export default function EventAppearance({
                                     horizontais funcionam melhor.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-5">
+                            <CardContent className="grid min-w-0 gap-5">
                                 <div className="grid gap-2">
                                     <Label htmlFor="banner">Imagem</Label>
                                     <Input
@@ -638,6 +708,7 @@ export default function EventAppearance({
                                         ref={bannerInput}
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
+                                        className="box-border h-auto min-h-11 w-full max-w-full min-w-0 file:mr-2 file:max-w-full file:shrink-0"
                                         onChange={(inputEvent) => {
                                             form.setData(
                                                 'banner',
@@ -650,6 +721,11 @@ export default function EventAppearance({
                                             );
                                         }}
                                     />
+                                    {form.data.banner && (
+                                        <p className="text-muted-foreground max-w-full min-w-0 text-xs break-all">
+                                            {form.data.banner.name}
+                                        </p>
+                                    )}
                                     <InputError message={form.errors.banner} />
                                 </div>
                                 <div className="grid gap-2">
@@ -666,7 +742,7 @@ export default function EventAppearance({
                                                     .value as AppearanceFormData['banner_position'],
                                             )
                                         }
-                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card box-border h-11 w-full max-w-full min-w-0 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
                                     >
                                         <option value="top">Topo</option>
                                         <option value="center">Centro</option>
@@ -705,7 +781,7 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="box-border w-full max-w-full min-w-0">
                             <CardHeader>
                                 <CardTitle>Seções</CardTitle>
                                 <CardDescription>
@@ -714,7 +790,7 @@ export default function EventAppearance({
                                     própria confirmação de presença.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-2">
+                            <CardContent className="grid min-w-0 gap-2">
                                 {form.data.sections.map(
                                     (section, sectionIndex) => (
                                         <div
@@ -861,20 +937,23 @@ export default function EventAppearance({
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle>Paleta da casa</CardTitle>
+                                <CardTitle>
+                                    Cores para inspirar os presentes
+                                </CardTitle>
                                 <CardDescription>
-                                    Cadastre cores ou materiais reais da casa,
-                                    sem relação com as cores do convite.
+                                    Se quiser, indique cores para ajudar seus
+                                    convidados a escolher presentes que combinem
+                                    com suas preferências.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid gap-4">
+                            <CardContent className="grid min-w-0 gap-4">
                                 {form.data.palette_items.map(
                                     (item, itemIndex) => (
                                         <div
                                             key={item.position}
-                                            className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_9rem_1fr_auto]"
+                                            className="grid min-w-0 gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-2"
                                         >
                                             <div className="grid gap-2">
                                                 <Label
@@ -932,7 +1011,7 @@ export default function EventAppearance({
                                                             items,
                                                         );
                                                     }}
-                                                    className="w-full p-1"
+                                                    className="h-11 w-full min-w-0 p-1"
                                                 />
                                             </div>
                                             <div className="grid gap-2">
@@ -1009,7 +1088,7 @@ export default function EventAppearance({
                                             ...form.data.palette_items,
                                             {
                                                 label: '',
-                                                color_hex: '#FFFFFF',
+                                                color_hex: '',
                                                 material: '',
                                                 position:
                                                     form.data.palette_items
@@ -1087,6 +1166,7 @@ export default function EventAppearance({
                             }
                             onClick={() => {
                                 if (pendingTheme === null) return;
+                                navigationBypass.current = true;
                                 themeForm.transform(() => ({
                                     theme_key: pendingTheme.key,
                                 }));
@@ -1096,6 +1176,9 @@ export default function EventAppearance({
                                         preserveState: false,
                                         preserveScroll: true,
                                         onSuccess: () => setPendingTheme(null),
+                                        onError: () => {
+                                            navigationBypass.current = false;
+                                        },
                                     },
                                 );
                             }}
@@ -1127,12 +1210,12 @@ function FontSelect({
     error?: string;
 }) {
     return (
-        <div className="grid gap-2">
+        <div className="grid w-full max-w-full min-w-0 gap-2">
             <Label htmlFor={name}>{label}</Label>
             <Select value={value} onValueChange={onChange}>
                 <SelectTrigger
                     id={name}
-                    className="w-full"
+                    className="box-border w-full max-w-full min-w-0"
                     style={{ fontFamily: fontStack(value) }}
                 >
                     <SelectValue />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
+    ArrowLeft,
     Gift,
     ImageIcon,
     Pencil,
@@ -9,7 +10,10 @@ import {
     Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
+import EventController from '@/actions/App/Http/Controllers/EventController';
 import GiftController from '@/actions/App/Http/Controllers/GiftController';
+import { EventCreationProgress } from '@/components/event-creation-progress';
 import { EmptyState } from '@/components/celebre/empty-state';
 import { EventSelector } from '@/components/celebre/event-selector';
 import { PageHeader } from '@/components/celebre/page-header';
@@ -58,11 +62,13 @@ export default function Gifts({
     events = [],
     gifts,
     standalone = false,
+    creationFlow = false,
 }: {
     event: EventOption | null;
     events?: EventOption[];
     gifts: GiftItem[];
     standalone?: boolean;
+    creationFlow?: boolean;
 }) {
     const [creatingGift, setCreatingGift] = useState(false);
     const [editingGift, setEditingGift] = useState<GiftItem | null>(null);
@@ -73,14 +79,17 @@ export default function Gifts({
             <Head title={event ? `Presentes — ${event.title}` : 'Presentes'} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <PageHeader
-                    eyebrow="Organização"
+                    eyebrow={creationFlow ? 'Criação do evento' : 'Organização'}
                     title="Presentes"
                     description={
-                        event?.title ??
-                        'Selecione um evento para gerenciar sua lista.'
+                        creationFlow
+                            ? 'Esta etapa é opcional. Você poderá adicionar ou alterar presentes depois pelo painel.'
+                            : (event?.title ??
+                              'Selecione um evento para gerenciar sua lista.')
                     }
                     actions={
-                        event && (
+                        event &&
+                        !creationFlow && (
                             <div className="flex flex-wrap gap-2">
                                 {standalone && (
                                     <Button asChild variant="outline">
@@ -102,6 +111,8 @@ export default function Gifts({
                         )
                     }
                 />
+
+                {creationFlow && <EventCreationProgress currentStep={2} />}
 
                 {standalone && events.length > 0 && (
                     <Card>
@@ -200,6 +211,55 @@ export default function Gifts({
                                 gift={deletingGift}
                                 onClose={() => setDeletingGift(null)}
                             />
+                        )}
+
+                        {creationFlow && (
+                            <Card>
+                                <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <Button asChild variant="outline">
+                                        <Link
+                                            href={EventController.edit(
+                                                event.id,
+                                                {
+                                                    query: { creation: 1 },
+                                                },
+                                            )}
+                                        >
+                                            <ArrowLeft /> Voltar
+                                        </Link>
+                                    </Button>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                        {gifts.length === 0 && (
+                                            <Button asChild variant="ghost">
+                                                <Link
+                                                    href={EventAppearanceController.edit(
+                                                        event.id,
+                                                        {
+                                                            query: {
+                                                                creation: 1,
+                                                            },
+                                                        },
+                                                    )}
+                                                >
+                                                    Pular por enquanto
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        <Button asChild>
+                                            <Link
+                                                href={EventAppearanceController.edit(
+                                                    event.id,
+                                                    {
+                                                        query: { creation: 1 },
+                                                    },
+                                                )}
+                                            >
+                                                Continuar
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         )}
                     </>
                 )}

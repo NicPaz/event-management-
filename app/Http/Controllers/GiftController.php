@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateGiftRequest;
 use App\Models\Event;
 use App\Models\Gift;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -18,13 +19,14 @@ class GiftController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Event $event): Response
+    public function index(Request $request, Event $event): Response
     {
         Gate::authorize('view', $event);
 
         return Inertia::render('dashboard/events/gifts', [
             'event' => ['id' => $event->id, 'title' => $event->title],
             'gifts' => $event->gifts()->whereNull('archived_at')->get()->map(fn (Gift $gift): array => $this->giftData($gift)),
+            'creationFlow' => $request->boolean('creation'),
         ]);
     }
 

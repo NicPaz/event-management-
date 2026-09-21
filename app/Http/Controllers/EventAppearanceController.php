@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Support\EventFontCatalog;
 use App\Support\EventThemeCatalog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +17,7 @@ use Inertia\Response;
 class EventAppearanceController extends Controller
 {
     public function edit(
+        Request $request,
         Event $event,
         GetEventInvitation $invitation,
         EventThemeCatalog $themes,
@@ -30,6 +32,7 @@ class EventAppearanceController extends Controller
                 'titles' => $fonts->titleOptions(),
                 'body' => $fonts->bodyOptions(),
             ],
+            'creationFlow' => $request->boolean('creation'),
         ]);
     }
 

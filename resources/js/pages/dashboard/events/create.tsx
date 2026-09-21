@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import EventController from '@/actions/App/Http/Controllers/EventController';
 import EventForm from '@/components/event-form';
+import { EventCreationProgress } from '@/components/event-creation-progress';
 import { PageHeader } from '@/components/celebre/page-header';
 import {
     Card,
@@ -10,14 +11,12 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { create, index } from '@/routes/events';
-import type { EventThemeOption, EventTypeOption } from '@/types';
+import type { EventTypeOption } from '@/types';
 
 export default function CreateEvent({
     eventTypes,
-    themeOptions,
 }: {
     eventTypes: EventTypeOption[];
-    themeOptions: EventThemeOption[];
 }) {
     return (
         <>
@@ -29,20 +28,21 @@ export default function CreateEvent({
                     description="O evento começa como rascunho e só fica público quando você publicar."
                 />
 
+                <EventCreationProgress currentStep={1} />
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Informações do evento</CardTitle>
                         <CardDescription>
-                            Você poderá revisar tudo na prévia antes da
-                            publicação.
+                            Preencha os dados principais. Ao continuar, o evento
+                            será salvo como rascunho privado.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <EventForm
                             action={EventController.store()}
                             eventTypes={eventTypes}
-                            themeOptions={themeOptions}
-                            submitLabel="Criar evento"
+                            submitLabel="Continuar"
                         />
                     </CardContent>
                 </Card>

@@ -169,11 +169,8 @@ export default function EventInvitation({
                         <div className="absolute -right-24 -bottom-28 size-96 rounded-full border border-(--event-border)" />
                     </>
                 )}
-                {event.theme.bannerUrl && (
-                    <div className="absolute inset-0 bg-black/45" />
-                )}
                 <div
-                    className={`relative mx-auto flex min-h-[28rem] max-w-4xl flex-col justify-center gap-6 px-5 py-20 ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center text-center'} ${event.theme.coverLayout === 'framed' ? 'my-8 min-h-[24rem] border-2 border-(--event-border)' : ''} ${event.theme.bannerUrl ? 'text-white' : ''}`}
+                    className={`relative mx-auto flex min-h-[28rem] max-w-4xl flex-col justify-center gap-6 px-5 py-20 ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center text-center'} ${event.theme.coverLayout === 'framed' ? 'my-8 min-h-[24rem] border-2 border-(--event-border)' : ''}`}
                 >
                     <span className="text-xs font-semibold tracking-[0.3em] uppercase">
                         Você está convidado
@@ -247,18 +244,20 @@ export default function EventInvitation({
                 <Countdown startsAt={event.startsAt} />
             </SectionShell>
         ),
-        palette: (
-            <SectionShell>
-                <div className="text-center">
-                    <Palette className="mx-auto size-7 text-(--event-accent)" />
-                    <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
-                        Paleta da casa
-                    </h2>
-                    <p className="mt-3 text-sm opacity-70">
-                        Cores e materiais que combinam com o nosso lar.
-                    </p>
-                </div>
-                {event.paletteItems.length > 0 ? (
+        palette:
+            event.paletteItems.length > 0 ? (
+                <SectionShell>
+                    <div className="text-center">
+                        <Palette className="mx-auto size-7 text-(--event-accent)" />
+                        <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
+                            Cores para inspirar os presentes
+                        </h2>
+                        <p className="mt-3 text-sm opacity-70">
+                            Se quiser, indique cores para ajudar seus convidados
+                            a escolher presentes que combinem com suas
+                            preferências.
+                        </p>
+                    </div>
                     <div className="mt-8 grid grid-cols-2 gap-3 @min-[640px]:grid-cols-4">
                         {event.paletteItems.map((item) => (
                             <div
@@ -284,13 +283,8 @@ export default function EventInvitation({
                             </div>
                         ))}
                     </div>
-                ) : (
-                    <p className="mt-8 text-center text-sm opacity-65">
-                        A paleta ainda não foi definida.
-                    </p>
-                )}
-            </SectionShell>
-        ),
+                </SectionShell>
+            ) : null,
         gifts: (
             <SectionShell>
                 <div className="text-center">
@@ -477,6 +471,11 @@ export default function EventInvitation({
             ) && <h1 className="sr-only">{event.title}</h1>}
             {event.sections
                 .filter((section) => section.enabled)
+                .filter(
+                    (section) =>
+                        section.type !== 'palette' ||
+                        event.paletteItems.length > 0,
+                )
                 .sort((first, second) => first.position - second.position)
                 .map((section) => (
                     <div key={section.type}>{sections[section.type]}</div>
