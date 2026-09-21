@@ -48,11 +48,8 @@ class StoreEventRequest extends FormRequest
             'type' => ['required', Rule::enum(EventType::class)],
             'theme_key' => [Rule::requiredIf($this->route('event') === null), 'nullable', 'string', 'max:80'],
             'starts_at' => ['nullable', 'date_format:Y-m-d\TH:i'],
-            'timezone' => ['required', 'timezone:all'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:500'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'welcome_text' => ['nullable', 'string', 'max:5000'],
             'instructions' => ['nullable', 'string', 'max:5000'],
         ];

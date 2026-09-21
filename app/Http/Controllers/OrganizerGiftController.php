@@ -22,6 +22,7 @@ class OrganizerGiftController extends Controller
         $event = $this->selectedEvent($request, $events);
 
         $gifts = $event?->gifts()
+            ->whereNull('archived_at')
             ->with(['reservations' => function ($query): void {
                 $query->where('status', GiftReservationStatus::Active)->with('guest:id,name');
             }])
@@ -30,6 +31,7 @@ class OrganizerGiftController extends Controller
                 'id' => $gift->id,
                 'name' => $gift->name,
                 'description' => $gift->description,
+                'priceCents' => $gift->price_cents,
                 'purchaseUrl' => $gift->purchase_url,
                 'imageUrl' => $gift->image_path === null ? null : Storage::disk('public')->url($gift->image_path),
                 'quantityTotal' => $gift->quantity_total,

@@ -119,6 +119,7 @@ class GetEventInvitation
                     'id' => $gift->id,
                     'name' => $gift->name,
                     'description' => $gift->description,
+                    'priceCents' => $gift->price_cents,
                     'imageUrl' => $gift->image_path === null ? null : Storage::disk('public')->url($gift->image_path),
                     'purchaseUrl' => $gift->purchase_url,
                     'quantityTotal' => $gift->quantity_total,

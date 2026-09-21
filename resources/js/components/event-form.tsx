@@ -144,19 +144,6 @@ export default function EventForm({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="timezone">Fuso horário</Label>
-                                <Input
-                                    id="timezone"
-                                    name="timezone"
-                                    defaultValue={
-                                        event?.timezone ?? 'America/Sao_Paulo'
-                                    }
-                                    required
-                                />
-                                <InputError message={errors.timezone} />
-                            </div>
-
-                            <div className="grid gap-2">
                                 <Label htmlFor="venue_name">
                                     Nome do local
                                 </Label>
@@ -176,34 +163,6 @@ export default function EventForm({
                                     defaultValue={event?.address ?? ''}
                                 />
                                 <InputError message={errors.address} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="latitude">
-                                    Latitude (opcional)
-                                </Label>
-                                <Input
-                                    id="latitude"
-                                    name="latitude"
-                                    type="number"
-                                    step="any"
-                                    defaultValue={event?.latitude ?? ''}
-                                />
-                                <InputError message={errors.latitude} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="longitude">
-                                    Longitude (opcional)
-                                </Label>
-                                <Input
-                                    id="longitude"
-                                    name="longitude"
-                                    type="number"
-                                    step="any"
-                                    defaultValue={event?.longitude ?? ''}
-                                />
-                                <InputError message={errors.longitude} />
                             </div>
 
                             <div className="grid gap-2 md:col-span-2">

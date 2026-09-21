@@ -100,6 +100,7 @@ export type EventGift = {
     id: number;
     name: string;
     description: string | null;
+    priceCents: number | null;
     imageUrl: string | null;
     purchaseUrl: string | null;
     quantityTotal: number;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, useForm } from '@inertiajs/react';
 import { Gift, Pencil, Search, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import EventGuestController from '@/actions/App/Http/Controllers/EventGuestController';
 import { EmptyState } from '@/components/celebre/empty-state';
 import { EventSelector } from '@/components/celebre/event-selector';
@@ -427,100 +428,136 @@ function GuestEditDialog({
                     </DialogDescription>
                 </DialogHeader>
                 {guest && (
-                    <Form
-                        action={EventGuestController.update({
-                            event: eventId,
-                            guest: guest.id,
-                        })}
-                        errorBag={`guest-${guest.id}`}
-                        options={{ preserveScroll: true }}
-                        onSuccess={onClose}
-                    >
-                        {({ errors, processing }) => (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2 sm:col-span-2">
-                                    <Label htmlFor={`name-${guest.id}`}>
-                                        Nome
-                                    </Label>
-                                    <Input
-                                        id={`name-${guest.id}`}
-                                        name="name"
-                                        defaultValue={guest.name}
-                                        required
-                                    />
-                                    <InputError message={errors.name} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor={`phone-${guest.id}`}>
-                                        Telefone
-                                    </Label>
-                                    <Input
-                                        id={`phone-${guest.id}`}
-                                        name="phone"
-                                        defaultValue={guest.phone}
-                                        required
-                                    />
-                                    <InputError message={errors.phone} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor={`status-${guest.id}`}>
-                                        Presença
-                                    </Label>
-                                    <select
-                                        id={`status-${guest.id}`}
-                                        name="status"
-                                        defaultValue={guest.status}
-                                        className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
-                                    >
-                                        <option value="unanswered">
-                                            Sem resposta
-                                        </option>
-                                        <option value="confirmed">
-                                            Confirmado
-                                        </option>
-                                        <option value="declined">
-                                            Não irá
-                                        </option>
-                                    </select>
-                                    <InputError message={errors.status} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor={`companions-${guest.id}`}>
-                                        Acompanhantes
-                                    </Label>
-                                    <Input
-                                        id={`companions-${guest.id}`}
-                                        name="companions_count"
-                                        type="number"
-                                        min={0}
-                                        max={100}
-                                        defaultValue={guest.companionsCount}
-                                        required
-                                    />
-                                    <InputError
-                                        message={errors.companions_count}
-                                    />
-                                </div>
-                                <DialogFooter className="sm:col-span-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={onClose}
-                                    >
-                                        Cancelar
-                                    </Button>
-                                    <Button disabled={processing}>
-                                        {processing
-                                            ? 'Salvando...'
-                                            : 'Salvar correção'}
-                                    </Button>
-                                </DialogFooter>
-                            </div>
-                        )}
-                    </Form>
+                    <GuestEditForm
+                        key={guest.id}
+                        eventId={eventId}
+                        guest={guest}
+                        onClose={onClose}
+                    />
                 )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+type GuestEditFormData = {
+    name: string;
+    phone: string;
+    status: GuestStatus;
+    companions_count: string;
+};
+
+function GuestEditForm({
+    eventId,
+    guest,
+    onClose,
+}: {
+    eventId: number;
+    guest: Guest;
+    onClose: () => void;
+}) {
+    const form = useForm<GuestEditFormData>({
+        name: guest.name,
+        phone: guest.phone,
+        status: guest.status,
+        companions_count: String(guest.companionsCount),
+    });
+
+    const submit = (submitEvent: React.FormEvent<HTMLFormElement>) => {
+        submitEvent.preventDefault();
+        form.submit(
+            EventGuestController.update({
+                event: eventId,
+                guest: guest.id,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Convidado atualizado.');
+                    onClose();
+                },
+            },
+        );
+    };
+
+    return (
+        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor={`name-${guest.id}`}>Nome</Label>
+                <Input
+                    id={`name-${guest.id}`}
+                    value={form.data.name}
+                    onChange={(inputEvent) =>
+                        form.setData('name', inputEvent.target.value)
+                    }
+                    required
+                    autoFocus
+                />
+                <InputError message={form.errors.name} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`phone-${guest.id}`}>Telefone</Label>
+                <Input
+                    id={`phone-${guest.id}`}
+                    value={form.data.phone}
+                    onChange={(inputEvent) =>
+                        form.setData('phone', inputEvent.target.value)
+                    }
+                    required
+                />
+                <InputError message={form.errors.phone} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`status-${guest.id}`}>Presença</Label>
+                <select
+                    id={`status-${guest.id}`}
+                    value={form.data.status}
+                    onChange={(inputEvent) =>
+                        form.setData(
+                            'status',
+                            inputEvent.target.value as GuestStatus,
+                        )
+                    }
+                    className="border-input focus-visible:border-ring focus-visible:ring-ring/35 bg-card h-11 rounded-xl border px-3 text-sm shadow-xs outline-none focus-visible:ring-3"
+                >
+                    <option value="unanswered">Sem resposta</option>
+                    <option value="confirmed">Confirmado</option>
+                    <option value="declined">Não irá</option>
+                </select>
+                <InputError message={form.errors.status} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`companions-${guest.id}`}>Acompanhantes</Label>
+                <Input
+                    id={`companions-${guest.id}`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={form.data.companions_count}
+                    onChange={(inputEvent) =>
+                        form.setData(
+                            'companions_count',
+                            inputEvent.target.value,
+                        )
+                    }
+                    required
+                />
+                <InputError message={form.errors.companions_count} />
+            </div>
+            <DialogFooter className="sm:col-span-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    disabled={form.processing}
+                    onClick={onClose}
+                >
+                    Cancelar
+                </Button>
+                <Button type="submit" disabled={form.processing}>
+                    {form.processing ? 'Salvando...' : 'Salvar correção'}
+                </Button>
+            </DialogFooter>
+        </form>
     );
 }
 

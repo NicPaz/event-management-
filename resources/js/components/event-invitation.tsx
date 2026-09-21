@@ -384,7 +384,7 @@ export default function EventInvitation({
                                                         : 'Presentear'}
                                                 </button>
                                             )}
-                                            {gift.purchaseUrl ? (
+                                            {!soldOut && gift.purchaseUrl ? (
                                                 <a
                                                     href={gift.purchaseUrl}
                                                     target="_blank"
@@ -394,14 +394,14 @@ export default function EventInvitation({
                                                     Sugestão de compra
                                                     <ExternalLink className="ml-1.5 size-3.5 shrink-0" />
                                                 </a>
-                                            ) : (
+                                            ) : !soldOut ? (
                                                 <span
                                                     aria-disabled="true"
                                                     className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-lg border border-(--event-border) px-3 text-center text-sm font-semibold opacity-45"
                                                 >
                                                     Sugestão de compra
                                                 </span>
-                                            )}
+                                            ) : null}
                                         </div>
                                     </div>
                                 </article>

@@ -77,6 +77,8 @@ test('organizers can correct a guest and identity changes revoke old guest sessi
         'phone_normalized' => '5511999999999',
         'session_version' => 3,
     ]);
+    $gift = Gift::factory()->for($event)->create(['name' => 'Presente preservado']);
+    $reservation = GiftReservation::factory()->for($guest, 'guest')->for($gift)->create();
 
     $response = $this->actingAs($organizer)->patch(route('events.guests.update', [$event, $guest]), [
         'name' => 'Nome Corrigido',
@@ -94,6 +96,20 @@ test('organizers can correct a guest and identity changes revoke old guest sessi
         ->session_version->toBe(4)
         ->confirmed_at->not->toBeNull();
     expect(AuditLog::query()->where('action', 'organizer.guest_updated')->where('subject_id', $guest->id)->exists())->toBeTrue();
+    expect($reservation->refresh()->event_guest_id)->toBe($guest->id);
+
+    $this->get(route('events.guests.index', $event))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('metrics.confirmedGuests', 1)
+            ->where('metrics.companions', 2)
+            ->where('metrics.expectedTotal', 3)
+            ->where('guests.data.0.id', $guest->id)
+            ->where('guests.data.0.name', 'Nome Corrigido')
+            ->where('guests.data.0.status', RsvpStatus::Confirmed->value)
+            ->where('guests.data.0.companionsCount', 2)
+            ->where('guests.data.0.reservations.0.giftName', 'Presente preservado')
+        );
 });
 
 test('organizers cannot view or update guests from another event', function () {

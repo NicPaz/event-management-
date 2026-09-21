@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Form, Head, Link, router, useForm } from '@inertiajs/react';
-import { Gift, ImageIcon, Plus } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import {
+    Gift,
+    ImageIcon,
+    Pencil,
+    Plus,
+    ShoppingBag,
+    Trash2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import GiftController from '@/actions/App/Http/Controllers/GiftController';
 import { EmptyState } from '@/components/celebre/empty-state';
 import { EventSelector } from '@/components/celebre/event-selector';
@@ -19,7 +27,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { create, edit, index } from '@/routes/events';
 import { index as giftsIndex } from '@/routes/gifts';
@@ -29,6 +36,7 @@ type GiftItem = {
     id: number;
     name: string;
     description: string | null;
+    priceCents: number | null;
     purchaseUrl: string | null;
     imageUrl: string | null;
     quantityTotal: number;
@@ -39,6 +47,11 @@ type GiftItem = {
 };
 
 type EventOption = { id: number; title: string };
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+});
 
 export default function Gifts({
     event,
@@ -51,6 +64,10 @@ export default function Gifts({
     gifts: GiftItem[];
     standalone?: boolean;
 }) {
+    const [creatingGift, setCreatingGift] = useState(false);
+    const [editingGift, setEditingGift] = useState<GiftItem | null>(null);
+    const [deletingGift, setDeletingGift] = useState<GiftItem | null>(null);
+
     return (
         <>
             <Head title={event ? `Presentes — ${event.title}` : 'Presentes'} />
@@ -93,6 +110,9 @@ export default function Gifts({
                                 events={events}
                                 selectedEventId={event?.id ?? null}
                                 onChange={(eventId) => {
+                                    setCreatingGift(false);
+                                    setEditingGift(null);
+                                    setDeletingGift(null);
                                     router.get(
                                         giftsIndex({
                                             query: eventId
@@ -131,183 +151,56 @@ export default function Gifts({
                 {event && (
                     <>
                         <div className="flex justify-end">
-                            <AddGiftDialog event={event} />
+                            <Button
+                                type="button"
+                                onClick={() => setCreatingGift(true)}
+                            >
+                                <Plus /> Adicionar presente
+                            </Button>
                         </div>
 
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            {gifts.map((gift) => (
-                                <Card
-                                    key={gift.id}
-                                    className={
-                                        gift.archived ? 'opacity-60' : ''
-                                    }
-                                >
-                                    <CardContent className="grid gap-4 pt-6">
-                                        <div className="flex gap-4">
-                                            {gift.imageUrl && (
-                                                <img
-                                                    src={gift.imageUrl}
-                                                    alt=""
-                                                    className="size-20 rounded-lg object-cover"
-                                                />
-                                            )}
-                                            <div>
-                                                <h2 className="font-semibold">
-                                                    {gift.name}
-                                                </h2>
-                                                <p className="text-muted-foreground text-sm">
-                                                    {gift.quantityReserved}{' '}
-                                                    reservadas ·{' '}
-                                                    {gift.quantityAvailable}{' '}
-                                                    disponíveis
-                                                </p>
-                                                {gift.archived && (
-                                                    <p className="text-sm font-medium">
-                                                        Arquivado
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {gift.reservations && (
-                                            <div>
-                                                <p className="mb-2 text-sm font-medium">
-                                                    Quem reservou
-                                                </p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {gift.reservations.map(
-                                                        (reservation) => (
-                                                            <Badge
-                                                                key={`${reservation.guestName}-${reservation.quantity}`}
-                                                                variant="secondary"
-                                                            >
-                                                                {
-                                                                    reservation.guestName
-                                                                }{' '}
-                                                                ×{' '}
-                                                                {
-                                                                    reservation.quantity
-                                                                }
-                                                            </Badge>
-                                                        ),
-                                                    )}
-                                                    {gift.reservations
-                                                        .length === 0 && (
-                                                        <span className="text-muted-foreground text-sm">
-                                                            Nenhuma reserva
-                                                            ativa.
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {!gift.archived && (
-                                            <Form
-                                                action={GiftController.update({
-                                                    event: event.id,
-                                                    gift: gift.id,
-                                                })}
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ errors, processing }) => (
-                                                    <div className="grid gap-3 sm:grid-cols-2">
-                                                        <Field
-                                                            label="Nome"
-                                                            name="name"
-                                                            defaultValue={
-                                                                gift.name
-                                                            }
-                                                            error={errors.name}
-                                                            required
-                                                        />
-                                                        <Field
-                                                            label="Quantidade total"
-                                                            name="quantity_total"
-                                                            defaultValue={
-                                                                gift.quantityTotal
-                                                            }
-                                                            error={
-                                                                errors.quantity_total
-                                                            }
-                                                            type="number"
-                                                            min={1}
-                                                            required
-                                                        />
-                                                        <Field
-                                                            label="Link de compra"
-                                                            name="purchase_url"
-                                                            defaultValue={
-                                                                gift.purchaseUrl ??
-                                                                ''
-                                                            }
-                                                            error={
-                                                                errors.purchase_url
-                                                            }
-                                                            type="url"
-                                                        />
-                                                        <div className="grid gap-2">
-                                                            <Label>
-                                                                Nova imagem
-                                                            </Label>
-                                                            <Input
-                                                                name="image"
-                                                                type="file"
-                                                                accept="image/jpeg,image/png,image/webp"
-                                                            />
-                                                        </div>
-                                                        <div className="grid gap-2 sm:col-span-2">
-                                                            <Label>
-                                                                Descrição
-                                                            </Label>
-                                                            <Textarea
-                                                                name="description"
-                                                                defaultValue={
-                                                                    gift.description ??
-                                                                    ''
-                                                                }
-                                                                rows={3}
-                                                            />
-                                                        </div>
-                                                        <Button
-                                                            disabled={
-                                                                processing
-                                                            }
-                                                            className="justify-self-start"
-                                                        >
-                                                            Salvar
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </Form>
-                                        )}
-                                        {!gift.archived && (
-                                            <Form
-                                                action={GiftController.destroy({
-                                                    event: event.id,
-                                                    gift: gift.id,
-                                                })}
-                                            >
-                                                <Button variant="outline">
-                                                    Arquivar
-                                                </Button>
-                                            </Form>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
-                            {gifts.length === 0 && (
-                                <div className="lg:col-span-2">
-                                    <EmptyState
-                                        icon={Gift}
-                                        title="Nenhum presente cadastrado"
-                                        description="Use o botão Adicionar presente para começar sua lista."
+                        {gifts.length > 0 ? (
+                            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                                {gifts.map((gift) => (
+                                    <GiftCard
+                                        key={gift.id}
+                                        gift={gift}
+                                        onEdit={() => setEditingGift(gift)}
+                                        onDelete={() => setDeletingGift(gift)}
                                     />
-                                </div>
-                            )}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon={Gift}
+                                title="Nenhum presente cadastrado"
+                                description="Use o botão Adicionar presente para começar sua lista."
+                            />
+                        )}
+
+                        {creatingGift && (
+                            <GiftEditorDialog
+                                key="create-gift"
+                                event={event}
+                                gift={null}
+                                onClose={() => setCreatingGift(false)}
+                            />
+                        )}
+                        {editingGift && (
+                            <GiftEditorDialog
+                                key={`edit-gift-${editingGift.id}`}
+                                event={event}
+                                gift={editingGift}
+                                onClose={() => setEditingGift(null)}
+                            />
+                        )}
+                        {deletingGift && (
+                            <DeleteGiftDialog
+                                event={event}
+                                gift={deletingGift}
+                                onClose={() => setDeletingGift(null)}
+                            />
+                        )}
                     </>
                 )}
             </div>
@@ -315,79 +208,191 @@ export default function Gifts({
     );
 }
 
+function GiftCard({
+    gift,
+    onEdit,
+    onDelete,
+}: {
+    gift: GiftItem;
+    onEdit: () => void;
+    onDelete: () => void;
+}) {
+    const soldOut = gift.quantityAvailable === 0;
+
+    return (
+        <Card className="group overflow-hidden p-0">
+            <div className="bg-muted relative aspect-[4/3] overflow-hidden">
+                {gift.imageUrl ? (
+                    <img
+                        src={gift.imageUrl}
+                        alt={`Foto de ${gift.name}`}
+                        className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    />
+                ) : (
+                    <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-2">
+                        <ShoppingBag className="size-10" />
+                        <span className="text-sm">Sem foto</span>
+                    </div>
+                )}
+                <Badge
+                    variant={soldOut ? 'secondary' : 'success'}
+                    className="absolute top-3 right-3 shadow-sm"
+                >
+                    {soldOut ? 'Sem disponibilidade' : 'Disponível'}
+                </Badge>
+            </div>
+            <CardContent className="flex flex-1 flex-col gap-4 p-5">
+                <div className="grid gap-1.5">
+                    <h2 className="text-base font-semibold text-balance">
+                        {gift.name}
+                    </h2>
+                    {gift.description && (
+                        <p className="text-muted-foreground line-clamp-3 text-sm">
+                            {gift.description}
+                        </p>
+                    )}
+                    {gift.priceCents !== null && (
+                        <p className="text-primary pt-1 font-semibold tabular-nums">
+                            {currencyFormatter.format(gift.priceCents / 100)}
+                        </p>
+                    )}
+                </div>
+
+                <dl className="bg-muted/60 grid grid-cols-3 gap-2 rounded-xl p-3 text-center">
+                    <Quantity label="Total" value={gift.quantityTotal} />
+                    <Quantity label="Reservada" value={gift.quantityReserved} />
+                    <Quantity
+                        label="Disponível"
+                        value={gift.quantityAvailable}
+                    />
+                </dl>
+
+                {gift.reservations && gift.reservations.length > 0 && (
+                    <div className="grid gap-2">
+                        <p className="text-sm font-medium">Quem reservou</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {gift.reservations.map((reservation) => (
+                                <Badge
+                                    key={`${reservation.guestName}-${reservation.quantity}`}
+                                    variant="secondary"
+                                >
+                                    {reservation.guestName} ×{' '}
+                                    {reservation.quantity}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
+                    <Button type="button" variant="outline" onClick={onEdit}>
+                        <Pencil /> Editar
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={onDelete}
+                    >
+                        <Trash2 /> Excluir
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function Quantity({ label, value }: { label: string; value: number }) {
+    return (
+        <div>
+            <dt className="text-muted-foreground text-[0.7rem]">{label}</dt>
+            <dd className="font-semibold tabular-nums">{value}</dd>
+        </div>
+    );
+}
+
 type GiftFormData = {
     name: string;
     quantity_total: string;
+    price: string;
     purchase_url: string;
     description: string;
     image: File | null;
+    remove_image: boolean;
+    _method?: 'PATCH';
 };
 
-function AddGiftDialog({ event }: { event: EventOption }) {
-    const [open, setOpen] = useState(false);
+function GiftEditorDialog({
+    event,
+    gift,
+    onClose,
+}: {
+    event: EventOption;
+    gift: GiftItem | null;
+    onClose: () => void;
+}) {
     const [discardOpen, setDiscardOpen] = useState(false);
     const [imageInputKey, setImageInputKey] = useState(0);
     const submitting = useRef(false);
     const form = useForm<GiftFormData>({
-        name: '',
-        quantity_total: '1',
-        purchase_url: '',
-        description: '',
+        name: gift?.name ?? '',
+        quantity_total: String(gift?.quantityTotal ?? 1),
+        price:
+            gift?.priceCents == null ? '' : (gift.priceCents / 100).toFixed(2),
+        purchase_url: gift?.purchaseUrl ?? '',
+        description: gift?.description ?? '',
         image: null,
+        remove_image: false,
+        _method: gift ? 'PATCH' : undefined,
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         if (!form.data.image) {
             setImagePreview(null);
-
             return;
         }
 
         const objectUrl = URL.createObjectURL(form.data.image);
         setImagePreview(objectUrl);
-
         return () => URL.revokeObjectURL(objectUrl);
     }, [form.data.image]);
 
-    const resetForm = () => {
-        form.resetAndClearErrors();
-        setImageInputKey((key) => key + 1);
-    };
-
-    const openCleanForm = () => {
-        resetForm();
-        setOpen(true);
-    };
+    const visibleImage =
+        imagePreview ?? (!form.data.remove_image ? gift?.imageUrl : null);
 
     const requestClose = () => {
-        if (form.processing) {
-            return;
-        }
-
+        if (form.processing) return;
         if (form.isDirty) {
             setDiscardOpen(true);
-
             return;
         }
+        onClose();
+    };
 
-        setOpen(false);
+    const removeImage = () => {
+        form.setData('image', null);
+        form.setData('remove_image', gift?.imageUrl != null);
+        form.clearErrors('image');
+        setImageInputKey((key) => key + 1);
     };
 
     const submit = (submitEvent: FormEvent<HTMLFormElement>) => {
         submitEvent.preventDefault();
-
-        if (submitting.current || form.processing) {
-            return;
-        }
+        if (submitting.current || form.processing) return;
 
         submitting.current = true;
-        form.post(GiftController.store(event.id).url, {
+        const action = gift
+            ? GiftController.update({ event: event.id, gift: gift.id }).url
+            : GiftController.store(event.id).url;
+
+        form.post(action, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                setOpen(false);
-                resetForm();
+                toast.success(
+                    gift ? 'Presente atualizado.' : 'Presente adicionado.',
+                );
+                onClose();
             },
             onFinish: () => {
                 submitting.current = false;
@@ -395,127 +400,123 @@ function AddGiftDialog({ event }: { event: EventOption }) {
         });
     };
 
+    const idPrefix = gift ? `gift-${gift.id}` : 'new-gift';
+
     return (
         <>
             <Dialog
-                open={open}
-                onOpenChange={(nextOpen) => {
-                    if (nextOpen) {
-                        openCleanForm();
-                    } else {
-                        requestClose();
-                    }
+                open
+                onOpenChange={(open) => {
+                    if (!open) requestClose();
                 }}
             >
-                <DialogTrigger asChild>
-                    <Button type="button">
-                        <Plus /> Adicionar presente
-                    </Button>
-                </DialogTrigger>
                 <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>Adicionar presente</DialogTitle>
+                        <DialogTitle>
+                            {gift ? 'Editar presente' : 'Adicionar presente'}
+                        </DialogTitle>
                         <DialogDescription>
-                            O presente será adicionado ao evento{' '}
+                            {gift ? 'Edite' : 'Cadastre'} o presente do evento{' '}
                             <strong>{event.title}</strong>.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submit} className="grid gap-5">
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="new-gift-name">Nome</Label>
-                                <Input
-                                    id="new-gift-name"
-                                    value={form.data.name}
-                                    onChange={(inputEvent) =>
-                                        form.setData(
-                                            'name',
-                                            inputEvent.target.value,
-                                        )
-                                    }
-                                    maxLength={120}
-                                    required
-                                    autoFocus
-                                />
-                                <InputError message={form.errors.name} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="new-gift-quantity">
-                                    Quantidade
-                                </Label>
-                                <Input
-                                    id="new-gift-quantity"
-                                    type="number"
-                                    min={1}
-                                    max={100000}
-                                    value={form.data.quantity_total}
-                                    onChange={(inputEvent) =>
-                                        form.setData(
-                                            'quantity_total',
-                                            inputEvent.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                                <InputError
-                                    message={form.errors.quantity_total}
-                                />
-                            </div>
+                            <FormField
+                                id={`${idPrefix}-name`}
+                                label="Nome"
+                                value={form.data.name}
+                                onChange={(value) =>
+                                    form.setData('name', value)
+                                }
+                                error={form.errors.name}
+                                maxLength={120}
+                                required
+                                autoFocus
+                            />
+                            <FormField
+                                id={`${idPrefix}-quantity`}
+                                label="Quantidade"
+                                type="number"
+                                min={Math.max(1, gift?.quantityReserved ?? 1)}
+                                max={100000}
+                                value={form.data.quantity_total}
+                                onChange={(value) =>
+                                    form.setData('quantity_total', value)
+                                }
+                                error={form.errors.quantity_total}
+                                required
+                            />
+                            <FormField
+                                id={`${idPrefix}-price`}
+                                label="Preço (opcional)"
+                                type="number"
+                                min={0}
+                                max={99999999.99}
+                                step="0.01"
+                                value={form.data.price}
+                                onChange={(value) =>
+                                    form.setData('price', value)
+                                }
+                                error={form.errors.price}
+                            />
+                            <FormField
+                                id={`${idPrefix}-url`}
+                                label="Link de compra (opcional)"
+                                type="url"
+                                value={form.data.purchase_url}
+                                onChange={(value) =>
+                                    form.setData('purchase_url', value)
+                                }
+                                error={form.errors.purchase_url}
+                            />
                             <div className="grid gap-2 sm:col-span-2">
-                                <Label htmlFor="new-gift-url">
-                                    Link de compra (opcional)
-                                </Label>
-                                <Input
-                                    id="new-gift-url"
-                                    type="url"
-                                    value={form.data.purchase_url}
-                                    onChange={(inputEvent) =>
-                                        form.setData(
-                                            'purchase_url',
-                                            inputEvent.target.value,
-                                        )
-                                    }
-                                />
-                                <InputError
-                                    message={form.errors.purchase_url}
-                                />
-                            </div>
-                            <div className="grid gap-2 sm:col-span-2">
-                                <Label htmlFor="new-gift-image">
+                                <Label htmlFor={`${idPrefix}-image`}>
                                     Foto (opcional)
                                 </Label>
                                 <Input
                                     key={imageInputKey}
-                                    id="new-gift-image"
+                                    id={`${idPrefix}-image`}
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
-                                    onChange={(inputEvent) =>
+                                    onChange={(inputEvent) => {
                                         form.setData(
                                             'image',
                                             inputEvent.target.files?.[0] ??
                                                 null,
-                                        )
-                                    }
+                                        );
+                                        form.setData('remove_image', false);
+                                    }}
                                 />
                                 <InputError message={form.errors.image} />
-                                {imagePreview ? (
-                                    <img
-                                        src={imagePreview}
-                                        alt="Prévia da foto do presente"
-                                        className="h-44 w-full rounded-lg border object-cover"
-                                    />
+                                {visibleImage ? (
+                                    <div className="grid gap-2">
+                                        <img
+                                            src={visibleImage}
+                                            alt="Prévia da foto do presente"
+                                            className="h-44 w-full rounded-xl border object-cover"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="justify-self-start"
+                                            onClick={removeImage}
+                                        >
+                                            <Trash2 /> Remover foto
+                                        </Button>
+                                    </div>
                                 ) : (
-                                    <div className="bg-muted text-muted-foreground flex h-28 items-center justify-center rounded-lg border border-dashed">
+                                    <div className="bg-muted text-muted-foreground flex h-28 items-center justify-center rounded-xl border border-dashed">
                                         <ImageIcon className="size-7" />
                                     </div>
                                 )}
                             </div>
                             <div className="grid gap-2 sm:col-span-2">
-                                <Label htmlFor="new-gift-description">
+                                <Label htmlFor={`${idPrefix}-description`}>
                                     Descrição
                                 </Label>
                                 <Textarea
-                                    id="new-gift-description"
+                                    id={`${idPrefix}-description`}
                                     rows={4}
                                     value={form.data.description}
                                     onChange={(inputEvent) =>
@@ -553,8 +554,8 @@ function AddGiftDialog({ event }: { event: EventOption }) {
                     <DialogHeader>
                         <DialogTitle>Descartar alterações?</DialogTitle>
                         <DialogDescription>
-                            Os dados preenchidos para este presente serão
-                            perdidos.
+                            Os dados preenchidos não serão salvos. A foto atual
+                            continuará preservada.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -568,11 +569,7 @@ function AddGiftDialog({ event }: { event: EventOption }) {
                         <Button
                             type="button"
                             variant="destructive"
-                            onClick={() => {
-                                setDiscardOpen(false);
-                                setOpen(false);
-                                resetForm();
-                            }}
+                            onClick={onClose}
                         >
                             Descartar
                         </Button>
@@ -583,22 +580,85 @@ function AddGiftDialog({ event }: { event: EventOption }) {
     );
 }
 
-function Field({
+function FormField({
+    id,
     label,
-    name,
     error,
+    onChange,
     ...props
-}: React.ComponentProps<typeof Input> & {
+}: Omit<React.ComponentProps<typeof Input>, 'onChange'> & {
     label: string;
-    name: string;
     error?: string;
+    onChange: (value: string) => void;
 }) {
     return (
         <div className="grid gap-2">
-            <Label htmlFor={name}>{label}</Label>
-            <Input id={name} name={name} {...props} />
+            <Label htmlFor={id}>{label}</Label>
+            <Input
+                id={id}
+                onChange={(inputEvent) => onChange(inputEvent.target.value)}
+                {...props}
+            />
             <InputError message={error} />
         </div>
+    );
+}
+
+function DeleteGiftDialog({
+    event,
+    gift,
+    onClose,
+}: {
+    event: EventOption;
+    gift: GiftItem;
+    onClose: () => void;
+}) {
+    const form = useForm({});
+
+    const remove = () => {
+        form.delete(
+            GiftController.destroy({ event: event.id, gift: gift.id }).url,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Presente excluído da lista ativa.');
+                    onClose();
+                },
+            },
+        );
+    };
+
+    return (
+        <Dialog open onOpenChange={(open) => !open && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Excluir “{gift.name}”?</DialogTitle>
+                    <DialogDescription>
+                        {gift.quantityReserved > 0
+                            ? `O presente será retirado do catálogo, mas as ${gift.quantityReserved} unidade(s) reservada(s) e o histórico serão preservados. Nenhuma reserva será cancelada.`
+                            : 'O presente será retirado do catálogo. O registro será arquivado para preservar o histórico do evento.'}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={form.processing}
+                        onClick={onClose}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={form.processing}
+                        onClick={remove}
+                    >
+                        {form.processing ? 'Excluindo...' : 'Excluir'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

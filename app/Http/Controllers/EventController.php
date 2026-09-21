@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,6 +26,7 @@ class EventController extends Controller
 
         $events = $request->user()
             ->events()
+            ->with('theme')
             ->latest('id')
             ->get()
             ->map(fn (Event $event): array => $this->eventData($event));
@@ -95,7 +97,7 @@ class EventController extends Controller
 
     public function update(UpdateEventRequest $request, Event $event): RedirectResponse
     {
-        $event->update($this->eventAttributes($request));
+        $event->update($this->eventAttributes($request, $event));
 
         return back()->with('success', 'Evento atualizado.');
     }
@@ -129,6 +131,9 @@ class EventController extends Controller
             'longitude' => $event->longitude === null ? null : (float) $event->longitude,
             'welcomeText' => $event->welcome_text,
             'instructions' => $event->instructions,
+            'bannerUrl' => $event->theme?->banner_path === null
+                ? null
+                : Storage::disk('public')->url($event->theme->banner_path),
             'rsvpOpen' => $event->rsvp_open,
             'reservationsOpen' => $event->reservations_open,
         ];
@@ -137,24 +142,28 @@ class EventController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function eventAttributes(StoreEventRequest $request): array
+    private function eventAttributes(StoreEventRequest $request, ?Event $event = null): array
     {
         $attributes = $request->safe()->only([
             'title',
             'type',
             'starts_at',
-            'timezone',
             'venue_name',
             'address',
-            'latitude',
-            'longitude',
             'welcome_text',
             'instructions',
         ]);
+        $timezone = $event === null
+            ? config('app.event_timezone', 'America/Sao_Paulo')
+            : $event->timezone;
 
         $attributes['starts_at'] = filled($attributes['starts_at'] ?? null)
-            ? CarbonImmutable::parse($attributes['starts_at'], $attributes['timezone'])->utc()
+            ? CarbonImmutable::parse($attributes['starts_at'], $timezone)->utc()
             : null;
+
+        if ($event === null) {
+            $attributes['timezone'] = $timezone;
+        }
 
         return $attributes;
     }

@@ -3,6 +3,8 @@
 use App\Models\Event;
 use App\Models\Gift;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('organizers manage only gifts from their own event', function () {
     $organizer = User::factory()->create();
@@ -73,4 +75,66 @@ test('archiving preserves gifts and their reservation history', function () {
         ->assertRedirect();
 
     expect($gift->refresh()->archived_at)->not->toBeNull();
+});
+
+test('gift editing distinguishes preserving replacing and removing its photo', function () {
+    Storage::fake('public');
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+    $originalPath = UploadedFile::fake()->image('original.jpg')->store("events/{$event->id}/gifts", 'public');
+    $gift = Gift::factory()->for($event)->create([
+        'image_path' => $originalPath,
+        'price_cents' => 12990,
+    ]);
+
+    $this->actingAs($organizer)->patch(route('events.gifts.update', [$event, $gift]), [
+        'name' => 'Presente sem troca de foto',
+        'quantity_total' => 3,
+        'price' => '149.90',
+    ])->assertRedirect();
+
+    expect($gift->refresh())
+        ->image_path->toBe($originalPath)
+        ->price_cents->toBe(14990);
+    Storage::disk('public')->assertExists($originalPath);
+
+    $this->post(route('events.gifts.update', [$event, $gift]), [
+        '_method' => 'PATCH',
+        'name' => $gift->name,
+        'quantity_total' => 3,
+        'image' => UploadedFile::fake()->image('substituta.webp'),
+    ])->assertRedirect();
+
+    $replacementPath = $gift->refresh()->image_path;
+    expect($replacementPath)->not->toBe($originalPath)->not->toBeNull();
+    Storage::disk('public')->assertMissing($originalPath);
+    Storage::disk('public')->assertExists($replacementPath);
+
+    $this->patch(route('events.gifts.update', [$event, $gift]), [
+        'name' => $gift->name,
+        'quantity_total' => 3,
+        'remove_image' => true,
+    ])->assertRedirect();
+
+    expect($gift->refresh()->image_path)->toBeNull();
+    Storage::disk('public')->assertMissing($replacementPath);
+});
+
+test('removing a gift photo does not delete a shared or external file', function () {
+    Storage::fake('public');
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create();
+    $sharedPath = "events/{$event->id}/gifts/shared.jpg";
+    Storage::disk('public')->put($sharedPath, 'shared image');
+    $gift = Gift::factory()->for($event)->create(['image_path' => $sharedPath]);
+    Gift::factory()->for($event)->create(['image_path' => $sharedPath]);
+
+    $this->actingAs($organizer)->patch(route('events.gifts.update', [$event, $gift]), [
+        'name' => $gift->name,
+        'quantity_total' => $gift->quantity_total,
+        'remove_image' => true,
+    ])->assertRedirect();
+
+    expect($gift->refresh()->image_path)->toBeNull();
+    Storage::disk('public')->assertExists($sharedPath);
 });
