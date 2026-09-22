@@ -4,12 +4,14 @@ import {
     ArrowDown,
     ArrowLeft,
     ArrowUp,
+    Eye,
     GripVertical,
     Monitor,
     Plus,
     Smartphone,
     Trash2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import EventAppearanceController from '@/actions/App/Http/Controllers/EventAppearanceController';
 import EventCreationController from '@/actions/App/Http/Controllers/EventCreationController';
 import EventThemeController from '@/actions/App/Http/Controllers/EventThemeController';
@@ -46,7 +48,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { index, show } from '@/routes/events';
+import { index, preview, show } from '@/routes/events';
+import { show as showPublicEvent } from '@/routes/public/events';
 import type {
     EventInvitation as EventInvitationData,
     EventFontOption,
@@ -176,6 +179,7 @@ export default function EventAppearance({
     const [pendingTheme, setPendingTheme] = useState<EventThemeOption | null>(
         null,
     );
+    const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
     const themeForm = useForm({ theme_key: event.theme.templateKey });
     const activeThemeKey = themeOptions.some(
         (theme) => theme.key === event.theme.templateKey,
@@ -186,7 +190,19 @@ export default function EventAppearance({
     const bannerInput = useRef<HTMLInputElement | null>(null);
     const backgroundInput = useRef<HTMLInputElement | null>(null);
     const continueAfterSave = useRef(false);
+    const openInvitationAfterSave = useRef(false);
+    const pendingInvitationWindow = useRef<Window | null>(null);
     const navigationBypass = useRef(false);
+    const appearanceSubmitting = useRef(false);
+    const invitationLink =
+        event.publicUrl !== null && event.slug !== null
+            ? {
+                  url: showPublicEvent(event.slug).url,
+                  label: 'Ver página',
+              }
+            : { url: preview(event.id).url, label: 'Ver prévia' };
+    const invitationUrl = invitationLink.url;
+    const invitationLabel = invitationLink.label;
 
     useEffect(() => {
         if (!form.data.banner) {
@@ -262,26 +278,78 @@ export default function EventAppearance({
 
     const submit = (submitEvent: FormEvent<HTMLFormElement>) => {
         submitEvent.preventDefault();
+        if (appearanceSubmitting.current || form.processing) {
+            return;
+        }
+
+        appearanceSubmitting.current = true;
         navigationBypass.current = true;
         form.post(EventAppearanceController.update(event.id).url, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 form.setDefaults();
+                toast.success('Alterações salvas com sucesso!');
+
+                if (openInvitationAfterSave.current) {
+                    pendingInvitationWindow.current?.location.replace(
+                        invitationUrl,
+                    );
+                    pendingInvitationWindow.current = null;
+                    openInvitationAfterSave.current = false;
+                }
 
                 if (continueAfterSave.current) {
                     router.visit(EventCreationController.show(event.id).url);
                 }
             },
             onError: () => {
+                pendingInvitationWindow.current?.close();
+                pendingInvitationWindow.current = null;
+                openInvitationAfterSave.current = false;
+                continueAfterSave.current = false;
                 navigationBypass.current = false;
+                toast.error(
+                    'Não foi possível salvar as alterações. Revise os campos e tente novamente.',
+                );
             },
             onFinish: () => {
+                appearanceSubmitting.current = false;
+
                 if (!continueAfterSave.current) {
                     navigationBypass.current = false;
                 }
             },
         });
+    };
+
+    const openInvitation = () => {
+        window.open(invitationUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    const saveAndOpenInvitation = () => {
+        if (appearanceSubmitting.current || form.processing) {
+            return;
+        }
+
+        const invitationWindow = window.open('about:blank', '_blank');
+
+        if (invitationWindow === null) {
+            toast.error(
+                'Não foi possível abrir uma nova aba. Permita pop-ups e tente novamente.',
+            );
+
+            return;
+        }
+
+        invitationWindow.opener = null;
+        pendingInvitationWindow.current = invitationWindow;
+        openInvitationAfterSave.current = true;
+        continueAfterSave.current = false;
+        setInvitationDialogOpen(false);
+        document
+            .querySelector<HTMLFormElement>('#appearance-form')
+            ?.requestSubmit();
     };
 
     return (
@@ -325,7 +393,7 @@ export default function EventAppearance({
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
                         <div className="flex rounded-lg border p-1">
                             <Button
                                 type="button"
@@ -354,6 +422,22 @@ export default function EventAppearance({
                                 <Monitor />
                             </Button>
                         </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={form.processing}
+                            onClick={() => {
+                                if (form.isDirty) {
+                                    setInvitationDialogOpen(true);
+
+                                    return;
+                                }
+
+                                openInvitation();
+                            }}
+                        >
+                            <Eye /> {invitationLabel}
+                        </Button>
                         <Button
                             type="submit"
                             form="appearance-form"
@@ -389,6 +473,7 @@ export default function EventAppearance({
                 <form
                     id="appearance-form"
                     onSubmit={submit}
+                    noValidate
                     className="grid min-h-0 flex-1 grid-rows-[minmax(16rem,42vh)_minmax(0,1fr)] md:grid-cols-[24rem_minmax(0,1fr)] md:grid-rows-1"
                 >
                     <div className="bg-background flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-b p-4 md:border-r md:border-b-0">
@@ -952,12 +1037,11 @@ export default function EventAppearance({
                         <Card className="min-w-0">
                             <CardHeader>
                                 <CardTitle>
-                                    Cores para inspirar os presentes
+                                    Paleta de Cor
                                 </CardTitle>
                                 <CardDescription>
-                                    Se quiser, indique cores para ajudar seus
-                                    convidados a escolher presentes que combinem
-                                    com suas preferências.
+                                    Cores sugeridas para ajudar na escolha dos
+                                    presentes.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid min-w-0 gap-4">
@@ -1196,6 +1280,51 @@ export default function EventAppearance({
                             {themeForm.processing
                                 ? 'Aplicando...'
                                 : 'Confirmar substituição'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog
+                open={invitationDialogOpen}
+                onOpenChange={setInvitationDialogOpen}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Há alterações não salvas</DialogTitle>
+                        <DialogDescription>
+                            A página em uma nova aba mostrará a última versão
+                            salva. Você pode salvar as alterações antes de
+                            abrir, abrir a versão atual sem salvar ou cancelar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={form.processing}
+                            onClick={() => setInvitationDialogOpen(false)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={form.processing}
+                            onClick={() => {
+                                setInvitationDialogOpen(false);
+                                openInvitation();
+                            }}
+                        >
+                            Abrir sem salvar
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={form.processing}
+                            onClick={saveAndOpenInvitation}
+                        >
+                            {form.processing
+                                ? 'Salvando...'
+                                : 'Salvar e abrir'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -114,6 +114,7 @@ export type EventInvitation = {
     id: number;
     title: string;
     slug: string | null;
+    publicUrl: string | null;
     type: string;
     status: EventStatus;
     startsAt: string | null;

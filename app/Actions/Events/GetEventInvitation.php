@@ -67,6 +67,9 @@ class GetEventInvitation
             'id' => $event->id,
             'title' => $event->title,
             'slug' => $event->slug,
+            'publicUrl' => $event->isPubliclyAvailable() && $event->slug !== null
+                ? route('public.events.show', $event->slug)
+                : null,
             'type' => $event->type->value,
             'status' => $event->status->value,
             'startsAt' => $event->starts_at?->toIso8601String(),

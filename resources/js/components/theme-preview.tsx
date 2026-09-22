@@ -4,6 +4,7 @@ import {
     cardClass,
     decorationBackground,
     fontStack,
+    hasCompactCoverIllustration,
     themeAssets,
 } from '@/lib/event-theme';
 import type { EventThemeOption } from '@/types';
@@ -20,6 +21,7 @@ export default function ThemePreview({
     onPreview?: () => void;
 }) {
     const assets = themeAssets(theme.key);
+    const compactCoverIllustration = hasCompactCoverIllustration(theme.key);
 
     return (
         <article
@@ -74,7 +76,11 @@ export default function ThemePreview({
                             src={assets.coverIllustrationUrl}
                             alt=""
                             aria-hidden="true"
-                            className="mt-2 h-12 w-14 object-contain"
+                            className={
+                                compactCoverIllustration
+                                    ? 'mt-1 h-9 w-10 object-contain'
+                                    : 'mt-2 h-12 w-14 object-contain'
+                            }
                         />
                     )}
                 </div>

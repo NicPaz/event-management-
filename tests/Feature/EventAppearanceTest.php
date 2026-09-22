@@ -47,6 +47,7 @@ test('organizers see default appearance for events without customization', funct
     $response->assertOk()->assertInertia(fn (Assert $page) => $page
         ->component('dashboard/events/appearance')
         ->where('event.theme.backgroundColor', '#FAF7F2')
+        ->where('event.publicUrl', null)
         ->where('event.theme.bannerUrl', null)
         ->where('event.theme.titleFont', 'classic')
         ->where('event.theme.bodyFont', 'modern')
@@ -97,7 +98,10 @@ test('appearance changes persist and are shared by preview and public page', fun
         ]),
     );
 
-    $response->assertRedirect()->assertSessionHas('success');
+    $response->assertRedirect()->assertSessionHas(
+        'success',
+        'Alterações salvas com sucesso!',
+    );
     $this->assertDatabaseHas('event_themes', [
         'event_id' => $event->id,
         'accent_color' => '#6B4F3A',
@@ -117,6 +121,7 @@ test('appearance changes persist and are shared by preview and public page', fun
 
     $assertInvitation = fn (Assert $page) => $page
         ->component('events/show')
+        ->where('event.publicUrl', route('public.events.show', $event->slug))
         ->where('event.theme.accentColor', '#6B4F3A')
         ->where('event.showConfirmedGuests', true)
         ->where('event.sections.0.type', EventSectionType::Welcome->value)

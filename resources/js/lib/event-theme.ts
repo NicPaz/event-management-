@@ -43,6 +43,33 @@ const themeAssetsByKey: Record<string, EventThemeAssets> = {
 export const themeAssets = (themeKey: string): EventThemeAssets =>
     themeAssetsByKey[themeKey] ?? {};
 
+export const hasCompactCoverIllustration = (themeKey: string): boolean =>
+    themeKey === 'housewarming-lemon-affection' ||
+    themeKey === 'kitchen-tea-lemon-affection';
+
+export const contrastingTextColor = (backgroundColor: string): string => {
+    const channels = backgroundColor
+        .replace('#', '')
+        .match(/.{2}/g)
+        ?.map((channel) => Number.parseInt(channel, 16) / 255)
+        .map((channel) =>
+            channel <= 0.04045
+                ? channel / 12.92
+                : ((channel + 0.055) / 1.055) ** 2.4,
+        );
+
+    if (!channels || channels.length !== 3 || channels.some(Number.isNaN)) {
+        return '#FFFFFF';
+    }
+
+    const luminance =
+        channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const darkContrast = (luminance + 0.05) / 0.05;
+
+    return darkContrast >= whiteContrast ? '#1A1A1A' : '#FFFFFF';
+};
+
 export const fontStack = (fontPair: string) => {
     const stacks: Record<string, string> = {
         classic: 'Georgia, Cambria, "Times New Roman", serif',

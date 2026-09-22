@@ -48,6 +48,6 @@ class EventAppearanceController extends Controller
             $request->file('background'),
         );
 
-        return back()->with('success', 'Aparência do evento atualizada.');
+        return back()->with('success', 'Alterações salvas com sucesso!');
     }
 }

@@ -13,8 +13,10 @@ import {
 import {
     buttonClass,
     cardClass,
+    contrastingTextColor,
     decorationBackground,
     fontStack,
+    hasCompactCoverIllustration,
     themeAssets,
 } from '@/lib/event-theme';
 import type {
@@ -137,6 +139,9 @@ export default function EventInvitation({
 }) {
     const date = event.startsAt ? new Date(event.startsAt) : null;
     const assets = themeAssets(event.theme.templateKey);
+    const compactCoverIllustration = hasCompactCoverIllustration(
+        event.theme.templateKey,
+    );
     const postCoverBackgroundUrl = event.theme.backgroundUrl
         ? null
         : assets.postCoverBackgroundUrl;
@@ -235,7 +240,7 @@ export default function EventInvitation({
                     </>
                 ) : null}
                 <div
-                    className={`relative mx-4 my-0 flex flex-col justify-center gap-4 px-5 py-10 text-center @min-[640px]:mx-auto @min-[640px]:gap-6 @min-[640px]:px-10 @min-[640px]:py-14 ${assets.coverFrameUrl ? 'min-h-0 w-[min(100%,680px)]' : 'min-h-[28rem] max-w-4xl'} ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center'} ${event.theme.coverLayout === 'framed' ? (assets.coverFrameUrl ? 'border-[16px] border-transparent bg-clip-padding bg-origin-border @min-[640px]:border-[32px]' : 'border-2 border-(--event-border)') : ''}`}
+                    className={`relative mx-4 my-0 flex flex-col justify-center px-5 py-10 text-center @min-[640px]:mx-auto @min-[640px]:px-10 @min-[640px]:py-14 ${compactCoverIllustration ? 'gap-3 @min-[640px]:gap-4' : 'gap-4 @min-[640px]:gap-6'} ${assets.coverFrameUrl ? 'min-h-0 w-[min(100%,680px)]' : 'min-h-[28rem] max-w-4xl'} ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center'} ${event.theme.coverLayout === 'framed' ? (assets.coverFrameUrl ? 'border-[16px] border-transparent bg-clip-padding bg-origin-border @min-[640px]:border-[32px]' : 'border-2 border-(--event-border)') : ''}`}
                     style={
                         assets.coverFrameUrl && !event.theme.bannerUrl
                             ? {
@@ -255,14 +260,7 @@ export default function EventInvitation({
                             ? 'Você está convidado'
                             : eventTypeLabel}
                     </span>
-                    {assets.coverIllustrationUrl && (
-                        <img
-                            src={assets.coverIllustrationUrl}
-                            alt="Avental azul claro com detalhe botânico"
-                            className="h-36 w-28 object-contain @min-[640px]:h-52 @min-[640px]:w-36"
-                        />
-                    )}
-                    <h1
+                                        <h1
                         className={`leading-tight text-balance ${assets.coverFrameUrl ? 'max-w-full text-lg @min-[640px]:text-2xl' : 'text-5xl @min-[640px]:text-7xl'}`}
                         aria-label={
                             assets.coverFrameUrl
@@ -272,42 +270,16 @@ export default function EventInvitation({
                     >
                         {event.title}
                     </h1>
-                    {assets.coverFrameUrl && (
-                        <div className="grid w-full max-w-2xl gap-4 text-sm">
-                            <div className="flex justify-center gap-3">
-                                <div className="min-w-28 border-y border-(--event-border) px-4 py-2 text-center">
-                                    <span className="block text-2xl font-semibold text-(--event-title-color)">
-                                        {dateDay ?? '--'}
-                                    </span>
-                                    <span className="block text-xs capitalize opacity-75">
-                                        {dateMonthYear ?? 'Data a confirmar'}
-                                    </span>
-                                </div>
-                                <div className="min-w-28 border-y border-(--event-border) px-4 py-2 text-center">
-                                    <span className="block text-2xl font-semibold text-(--event-title-color)">
-                                        {date
-                                            ? new Intl.DateTimeFormat('pt-BR', {
-                                                  timeStyle: 'short',
-                                                  timeZone: event.timezone,
-                                              }).format(date)
-                                            : '--:--'}
-                                    </span>
-                                    <span className="block text-xs opacity-75">
-                                        Horário
-                                    </span>
-                                </div>
-                            </div>
-                            <p className="max-w-xl border-t border-(--event-border) pt-4 text-center leading-6 break-words">
-                                <strong className="block text-(--event-title-color)">
-                                    {event.venueName ?? 'Local a confirmar'}
-                                </strong>
-                                {event.address && (
-                                    <span className="block opacity-80">
-                                        {event.address}
-                                    </span>
-                                )}
-                            </p>
-                        </div>
+                    {assets.coverIllustrationUrl && (
+                        <img
+                            src={assets.coverIllustrationUrl}
+                            alt="Avental azul claro com detalhe botânico"
+                            className={
+                                compactCoverIllustration
+                                    ? 'h-28 w-20 object-contain @min-[640px]:h-40 @min-[640px]:w-28'
+                                    : 'h-36 w-28 object-contain @min-[640px]:h-52 @min-[640px]:w-36'
+                            }
+                        />
                     )}
                 </div>
             </section>
@@ -381,19 +353,17 @@ export default function EventInvitation({
                     <div className="text-center">
                         <Palette className="mx-auto size-7 text-(--event-accent)" />
                         <h2 className="mt-4 font-serif text-3xl @min-[640px]:text-4xl">
-                            Cores para inspirar os presentes
+                            Paleta de Cor
                         </h2>
                         <p className="mt-3 text-sm opacity-70">
-                            Se quiser, indique cores para ajudar seus convidados
-                            a escolher presentes que combinem com suas
-                            preferências.
+                            Cores sugeridas para ajudar na escolha dos presentes.
                         </p>
                     </div>
-                    <div className="mt-8 grid grid-cols-2 gap-3 @min-[640px]:grid-cols-4">
+                    <div className="mt-8 flex flex-wrap justify-center gap-3">
                         {event.paletteItems.map((item) => (
                             <div
                                 key={`${item.position}-${item.label}`}
-                                className="rounded-2xl border border-(--event-border) bg-(--event-surface) p-4 text-center"
+                                className="flex min-w-0 basis-[calc(50%-0.375rem)] flex-col items-center rounded-2xl border border-(--event-border) bg-(--event-surface) p-4 text-center @min-[640px]:basis-[calc(25%-0.5625rem)]"
                             >
                                 {item.colorHex && (
                                     <span
@@ -437,7 +407,14 @@ export default function EventInvitation({
                                     className={`relative flex min-w-0 flex-col overflow-hidden border border-(--event-border) bg-(--event-surface) ${cardClass(event.theme.cardStyle)}`}
                                 >
                                     {soldOut && (
-                                        <span className="absolute top-3 right-3 z-10 rounded-full bg-neutral-950/85 px-3 py-1 text-xs font-semibold text-white">
+                                        <span
+                                            className="absolute top-3 right-3 z-10 max-w-[calc(100%-1.5rem)] rounded-full bg-(--event-accent) px-4 py-2 text-center text-sm leading-tight font-semibold shadow-sm"
+                                            style={{
+                                                color: contrastingTextColor(
+                                                    event.theme.accentColor,
+                                                ),
+                                            }}
+                                        >
                                             Já reservado
                                         </span>
                                     )}
