@@ -9,6 +9,7 @@
 
 .event-typography :is(h1, h2, h3, .event-title-font) {
     font-family: var(--event-title-font);
+    color: var(--event-title-color, var(--event-text));
 }
 
 @theme {

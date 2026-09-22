@@ -15,6 +15,7 @@ import {
     cardClass,
     decorationBackground,
     fontStack,
+    themeAssets,
 } from '@/lib/event-theme';
 import type {
     EventGift,
@@ -29,6 +30,7 @@ type ThemeStyle = CSSProperties & {
     '--event-border': string;
     '--event-surface': string;
     '--event-text': string;
+    '--event-title-color': string;
     '--event-title-font': string;
 };
 
@@ -134,18 +136,60 @@ export default function EventInvitation({
     giftReservations?: Record<string, number>;
 }) {
     const date = event.startsAt ? new Date(event.startsAt) : null;
+    const assets = themeAssets(event.theme.templateKey);
+    const postCoverBackgroundUrl = event.theme.backgroundUrl
+        ? null
+        : assets.postCoverBackgroundUrl;
+    const titleColor =
+        assets.titleColor && event.theme.textColor.toUpperCase() === '#344E50'
+            ? assets.titleColor
+            : event.theme.textColor;
+    const eventTypeLabels: Record<string, string> = {
+        housewarming: 'Chá de casa nova',
+        kitchen_tea: 'Chá de panela',
+        wedding: 'Casamento',
+        birthday: 'Aniversário',
+        other: 'Celebração',
+    };
+    const eventTypeLabel = eventTypeLabels[event.type] ?? 'Celebração';
+    const titleIncludesType = event.title
+        .toLocaleLowerCase('pt-BR')
+        .includes(eventTypeLabel.toLocaleLowerCase('pt-BR'));
+    const dateDay = date
+        ? new Intl.DateTimeFormat('pt-BR', {
+              day: '2-digit',
+              timeZone: event.timezone,
+          }).format(date)
+        : null;
+    const dateMonthYear = date
+        ? new Intl.DateTimeFormat('pt-BR', {
+              month: 'long',
+              year: 'numeric',
+              timeZone: event.timezone,
+          }).format(date)
+        : null;
+    const dateTimeLabel = date
+        ? new Intl.DateTimeFormat('pt-BR', {
+              dateStyle: 'full',
+              timeStyle: 'short',
+              timeZone: event.timezone,
+          }).format(date)
+        : 'Data e horário a confirmar';
     const themeStyle: ThemeStyle = {
         '--event-accent': event.theme.accentColor,
         '--event-background': event.theme.backgroundColor,
         '--event-border': event.theme.borderColor,
         '--event-surface': event.theme.surfaceColor,
         '--event-text': event.theme.textColor,
+        '--event-title-color': titleColor,
         '--event-title-font': fontStack(event.theme.titleFont),
         fontFamily: fontStack(event.theme.bodyFont),
         backgroundColor: event.theme.backgroundColor,
         backgroundImage: event.theme.backgroundUrl
             ? `linear-gradient(${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}, ${event.theme.backgroundOverlay === 'dark' ? `rgba(0,0,0,${event.theme.backgroundOverlayOpacity / 100})` : `rgba(255,255,255,${event.theme.backgroundOverlayOpacity / 100})`}), url(${event.theme.backgroundUrl})`
-            : decorationBackground(event.theme),
+            : postCoverBackgroundUrl
+              ? undefined
+              : decorationBackground(event.theme),
         backgroundSize:
             event.theme.backgroundFill === 'repeat' ? 'auto' : 'cover',
         backgroundRepeat:
@@ -155,7 +199,28 @@ export default function EventInvitation({
 
     const sections: Record<EventSectionType, ReactNode> = {
         cover: (
-            <section className="relative min-h-[28rem] overflow-hidden border-b border-(--event-border)">
+            <section
+                className={`relative overflow-hidden border-b border-(--event-border) ${assets.coverFrameUrl ? 'py-5 @min-[640px]:py-8' : 'min-h-[28rem]'}`}
+                style={
+                    assets.backgroundUrl &&
+                    !event.theme.bannerUrl &&
+                    !event.theme.backgroundUrl
+                        ? {
+                              backgroundImage: `${assets.backgroundOverlay === 'light' ? `linear-gradient(rgba(255,255,255,${(assets.backgroundOverlayOpacity ?? 0) / 100}), rgba(255,255,255,${(assets.backgroundOverlayOpacity ?? 0) / 100}))` : assets.backgroundOverlay === 'dark' ? `linear-gradient(rgba(0,0,0,${(assets.backgroundOverlayOpacity ?? 0) / 100}), rgba(0,0,0,${(assets.backgroundOverlayOpacity ?? 0) / 100}))` : 'none'}, url(${assets.backgroundUrl})`,
+                              backgroundPosition:
+                                  assets.backgroundPosition ?? 'center',
+                              backgroundRepeat:
+                                  assets.backgroundFill === 'repeat'
+                                      ? 'repeat'
+                                      : 'no-repeat',
+                              backgroundSize:
+                                  assets.backgroundFill === 'repeat'
+                                      ? 'auto'
+                                      : 'cover',
+                          }
+                        : undefined
+                }
+            >
                 {event.theme.bannerUrl ? (
                     <img
                         src={event.theme.bannerUrl}
@@ -163,21 +228,87 @@ export default function EventInvitation({
                         className="absolute inset-0 size-full object-cover"
                         style={{ objectPosition: event.theme.bannerPosition }}
                     />
-                ) : (
+                ) : !assets.coverFrameUrl ? (
                     <>
                         <div className="absolute -top-24 -left-24 size-80 rounded-full border border-(--event-border)" />
                         <div className="absolute -right-24 -bottom-28 size-96 rounded-full border border-(--event-border)" />
                     </>
-                )}
+                ) : null}
                 <div
-                    className={`relative mx-auto flex min-h-[28rem] max-w-4xl flex-col justify-center gap-6 px-5 py-20 ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center text-center'} ${event.theme.coverLayout === 'framed' ? 'my-8 min-h-[24rem] border-2 border-(--event-border)' : ''}`}
+                    className={`relative mx-4 my-0 flex flex-col justify-center gap-4 px-5 py-10 text-center @min-[640px]:mx-auto @min-[640px]:gap-6 @min-[640px]:px-10 @min-[640px]:py-14 ${assets.coverFrameUrl ? 'min-h-0 w-[min(100%,680px)]' : 'min-h-[28rem] max-w-4xl'} ${event.theme.coverLayout === 'split' || event.theme.coverLayout === 'editorial' ? 'items-start text-left' : 'items-center'} ${event.theme.coverLayout === 'framed' ? (assets.coverFrameUrl ? 'border-[16px] border-transparent bg-clip-padding bg-origin-border @min-[640px]:border-[32px]' : 'border-2 border-(--event-border)') : ''}`}
+                    style={
+                        assets.coverFrameUrl && !event.theme.bannerUrl
+                            ? {
+                                  backgroundImage: `linear-gradient(${event.theme.surfaceColor}, ${event.theme.surfaceColor}), url(${assets.coverFrameUrl})`,
+                                  backgroundOrigin: 'border-box',
+                                  backgroundClip: 'padding-box, border-box',
+                                  backgroundSize: 'auto, auto 144px',
+                              }
+                            : undefined
+                    }
                 >
-                    <span className="text-xs font-semibold tracking-[0.3em] uppercase">
-                        Você está convidado
+                    <span
+                        className="text-[2.5rem] leading-tight text-(--event-title-color) @min-[640px]:text-[3.5rem]"
+                        style={{ fontFamily: fontStack(event.theme.titleFont) }}
+                    >
+                        {titleIncludesType
+                            ? 'Você está convidado'
+                            : eventTypeLabel}
                     </span>
-                    <h1 className="text-5xl leading-tight text-balance @min-[640px]:text-7xl">
+                    {assets.coverIllustrationUrl && (
+                        <img
+                            src={assets.coverIllustrationUrl}
+                            alt="Avental azul claro com detalhe botânico"
+                            className="h-36 w-28 object-contain @min-[640px]:h-52 @min-[640px]:w-36"
+                        />
+                    )}
+                    <h1
+                        className={`leading-tight text-balance ${assets.coverFrameUrl ? 'max-w-full text-lg @min-[640px]:text-2xl' : 'text-5xl @min-[640px]:text-7xl'}`}
+                        aria-label={
+                            assets.coverFrameUrl
+                                ? `${event.title}. ${dateTimeLabel}`
+                                : undefined
+                        }
+                    >
                         {event.title}
                     </h1>
+                    {assets.coverFrameUrl && (
+                        <div className="grid w-full max-w-2xl gap-4 text-sm">
+                            <div className="flex justify-center gap-3">
+                                <div className="min-w-28 border-y border-(--event-border) px-4 py-2 text-center">
+                                    <span className="block text-2xl font-semibold text-(--event-title-color)">
+                                        {dateDay ?? '--'}
+                                    </span>
+                                    <span className="block text-xs capitalize opacity-75">
+                                        {dateMonthYear ?? 'Data a confirmar'}
+                                    </span>
+                                </div>
+                                <div className="min-w-28 border-y border-(--event-border) px-4 py-2 text-center">
+                                    <span className="block text-2xl font-semibold text-(--event-title-color)">
+                                        {date
+                                            ? new Intl.DateTimeFormat('pt-BR', {
+                                                  timeStyle: 'short',
+                                                  timeZone: event.timezone,
+                                              }).format(date)
+                                            : '--:--'}
+                                    </span>
+                                    <span className="block text-xs opacity-75">
+                                        Horário
+                                    </span>
+                                </div>
+                            </div>
+                            <p className="max-w-xl border-t border-(--event-border) pt-4 text-center leading-6 break-words">
+                                <strong className="block text-(--event-title-color)">
+                                    {event.venueName ?? 'Local a confirmar'}
+                                </strong>
+                                {event.address && (
+                                    <span className="block opacity-80">
+                                        {event.address}
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </section>
         ),
@@ -460,26 +591,55 @@ export default function EventInvitation({
             </SectionShell>
         ),
     };
+    const orderedSections = event.sections
+        .filter((section) => section.enabled)
+        .filter(
+            (section) =>
+                section.type !== 'palette' || event.paletteItems.length > 0,
+        )
+        .sort((first, second) => first.position - second.position);
+    const coverIndex = orderedSections.findIndex(
+        (section) => section.type === 'cover',
+    );
+    const renderedSections = orderedSections.map((section) => (
+        <div key={section.type}>{sections[section.type]}</div>
+    ));
+    const readOnlyFooter = event.isReadOnly && (
+        <footer className="border-t border-(--event-border) px-5 py-8 text-center text-sm opacity-70">
+            Este evento foi encerrado e está disponível somente para consulta.
+        </footer>
+    );
 
     return (
         <div
             style={themeStyle}
-            className="event-typography @container min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text)"
+            className={`event-typography @container min-h-screen overflow-x-hidden bg-(--event-background) text-(--event-text) ${postCoverBackgroundUrl ? 'flex flex-col' : ''}`}
         >
             {!event.sections.some(
                 (section) => section.type === 'cover' && section.enabled,
             ) && <h1 className="sr-only">{event.title}</h1>}
-            {event.sections
-                .filter((section) => section.enabled)
-                .filter(
-                    (section) =>
-                        section.type !== 'palette' ||
-                        event.paletteItems.length > 0,
-                )
-                .sort((first, second) => first.position - second.position)
-                .map((section) => (
-                    <div key={section.type}>{sections[section.type]}</div>
-                ))}
+            {postCoverBackgroundUrl ? (
+                <>
+                    {renderedSections.slice(0, coverIndex + 1)}
+                    <div
+                        className="w-full flex-1"
+                        style={{
+                            backgroundImage: `url(${postCoverBackgroundUrl})`,
+                            backgroundPosition: 'top left',
+                            backgroundRepeat: 'repeat',
+                            backgroundSize: '400px auto',
+                        }}
+                    >
+                        {renderedSections.slice(coverIndex + 1)}
+                        {readOnlyFooter}
+                    </div>
+                </>
+            ) : (
+                <>
+                    {renderedSections}
+                    {readOnlyFooter}
+                </>
+            )}
             {event.slug && showGuestActions && (
                 <div className="fixed right-4 bottom-4 z-20">
                     <Link
@@ -489,12 +649,6 @@ export default function EventInvitation({
                         Minha participação
                     </Link>
                 </div>
-            )}
-            {event.isReadOnly && (
-                <footer className="border-t border-(--event-border) px-5 py-8 text-center text-sm opacity-70">
-                    Este evento foi encerrado e está disponível somente para
-                    consulta.
-                </footer>
             )}
         </div>
     );

@@ -36,11 +36,26 @@ function themeAppearancePayload(array $overrides = []): array
 test('every event type exposes four functional visual themes', function (EventType $type) {
     $themes = app(EventThemeCatalog::class)->forType($type);
 
-    expect($themes)->toHaveCount(4)
-        ->and(collect($themes)->pluck('key')->unique())->toHaveCount(4)
+    expect($themes)->toHaveCount(in_array($type, [EventType::Housewarming, EventType::KitchenTea], true) ? 5 : 4)
+        ->and(collect($themes)->pluck('key')->unique())->toHaveCount(in_array($type, [EventType::Housewarming, EventType::KitchenTea], true) ? 5 : 4)
         ->and(collect($themes)->pluck('coverLayout')->unique()->count())->toBeGreaterThan(1)
         ->and(collect($themes)->pluck('decorationStyle')->unique()->count())->toBeGreaterThan(1);
 })->with(EventType::cases());
+
+test('lemon and affection is available only for housewarming and kitchen tea', function () {
+    $catalog = app(EventThemeCatalog::class);
+
+    expect(collect($catalog->forType(EventType::Housewarming))->pluck('key'))
+        ->toContain('housewarming-lemon-affection');
+    expect(collect($catalog->forType(EventType::KitchenTea))->pluck('key'))
+        ->toContain('kitchen-tea-lemon-affection');
+    expect(collect($catalog->forType(EventType::Wedding))->pluck('name'))
+        ->not->toContain('Limão & Afeto');
+    expect(collect($catalog->forType(EventType::Birthday))->pluck('name'))
+        ->not->toContain('Limão & Afeto');
+    expect(collect($catalog->forType(EventType::Other))->pluck('name'))
+        ->not->toContain('Limão & Afeto');
+});
 
 test('event creation applies a theme from the selected category', function () {
     $organizer = User::factory()->create();
@@ -77,7 +92,7 @@ test('event creation rejects a theme from another category', function () {
     $this->assertDatabaseEmpty('events');
 });
 
-test('applying a theme preserves operational data and section configuration', function () {
+test('applying a theme removes uploaded appearance assets and preserves operational data', function () {
     Storage::fake('public');
     $organizer = User::factory()->create();
     $event = Event::factory()->for($organizer)->create([
@@ -129,6 +144,26 @@ test('applying a theme preserves operational data and section configuration', fu
             ->where('event.theme.titleFont', 'organic')
             ->where('event.theme.bodyFont', 'organic')
         );
+});
+
+test('lemon affection applies its repeating lemon background defaults', function () {
+    $organizer = User::factory()->create();
+    $event = Event::factory()->for($organizer)->create([
+        'type' => EventType::Housewarming,
+    ]);
+    EventTheme::factory()->for($event)->create([
+        'banner_path' => "events/{$event->id}/banners/banner.jpg",
+        'background_path' => "events/{$event->id}/backgrounds/background.jpg",
+    ]);
+
+    $this->actingAs($organizer)->post(route('events.appearance.theme.update', $event), [
+        'theme_key' => 'housewarming-lemon-affection',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($event->theme()->sole()->background_fill)->toBe('repeat')
+        ->and($event->theme()->sole()->background_position)->toBe('top')
+        ->and($event->theme()->sole()->background_overlay)->toBe('light')
+        ->and($event->theme()->sole()->background_overlay_opacity)->toBe(50);
 });
 
 test('confirmed guest names are sent only when the internal option and rsvp section are enabled', function () {

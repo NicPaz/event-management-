@@ -43,11 +43,13 @@ class EventThemeCatalog
             $this->theme('housewarming-sage', EventType::Housewarming, 'Botânico verde sálvia', 'Folhagens leves e cartões naturais.', '#EEF2EA', '#FCFFF9', '#26382D', '#6F8B72', '#C4D1C2', 'organic', 'framed', 'glass', 'pill', 'botanical'),
             $this->theme('housewarming-modern', EventType::Housewarming, 'Casa moderna minimalista', 'Linhas precisas e composição assimétrica.', '#F2F2F0', '#FFFFFF', '#181A1B', '#4D625B', '#CFD2CF', 'modern', 'split', 'outlined', 'square', 'geometric'),
             $this->theme('housewarming-rustic', EventType::Housewarming, 'Rústico acolhedor', 'Texturas quentes e molduras artesanais.', '#F3E6D5', '#FFF9F0', '#3F2D21', '#A25F3B', '#D6B99D', 'rustic', 'framed', 'layered', 'rounded', 'organic'),
+            $this->theme('housewarming-lemon-affection', EventType::Housewarming, 'Limão & Afeto', 'Limões em aquarela, xadrez azul e detalhes delicados para celebrar novos começos.', '#F7F3E7', '#FFFFFF', '#344E50', '#426D76', '#C7DCE6', 'handwritten', 'framed', 'soft', 'rounded', 'citrus'),
 
             $this->theme('kitchen-vintage', EventType::KitchenTea, 'Cozinha vintage', 'Xadrez suave, rótulos e charme retrô.', '#FFF4E4', '#FFFCF4', '#46352A', '#B34E3A', '#E1BFA0', 'retro', 'framed', 'outlined', 'pill', 'checks'),
             $this->theme('kitchen-floral', EventType::KitchenTea, 'Floral delicado', 'Flores miúdas e composição romântica.', '#FFF2F3', '#FFFCFC', '#4D343A', '#B7687B', '#E6C4CC', 'romantic', 'centered', 'soft', 'rounded', 'floral'),
             $this->theme('kitchen-lemon', EventType::KitchenTea, 'Limão siciliano', 'Amarelo solar e ilustrações mediterrâneas.', '#FFF9D9', '#FFFFF7', '#2E3D2D', '#D19A16', '#DED58F', 'playful', 'split', 'layered', 'pill', 'citrus'),
             $this->theme('kitchen-terracotta', EventType::KitchenTea, 'Terracota e madeira', 'Tons terrosos e cartões robustos.', '#F3E3D7', '#FFF9F5', '#442D25', '#B45F3C', '#D7AE95', 'rustic', 'editorial', 'layered', 'square', 'organic'),
+            $this->theme('kitchen-tea-lemon-affection', EventType::KitchenTea, 'Limão & Afeto', 'Limões em aquarela, xadrez azul e detalhes delicados para celebrar novos começos.', '#F7F3E7', '#FFFFFF', '#344E50', '#426D76', '#C7DCE6', 'handwritten', 'framed', 'soft', 'rounded', 'citrus'),
 
             $this->theme('wedding-classic', EventType::Wedding, 'Clássico elegante', 'Serifas formais e detalhes dourados.', '#F8F5EF', '#FFFFFF', '#27221E', '#9B7B45', '#DDD1BD', 'classic', 'centered', 'outlined', 'rounded', 'monogram'),
             $this->theme('wedding-garden', EventType::Wedding, 'Jardim romântico', 'Flores aquareladas e formas suaves.', '#F4F4EA', '#FFFDF8', '#334039', '#8C6F76', '#CED3C4', 'romantic', 'framed', 'soft', 'pill', 'floral'),

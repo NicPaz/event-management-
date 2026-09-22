@@ -20,8 +20,12 @@ class ApplyEventTheme
         $event->loadMissing('theme');
         $oldBannerPath = $event->theme?->banner_path;
         $oldBackgroundPath = $event->theme?->background_path;
+        $isLemonAffection = in_array($themeKey, [
+            'housewarming-lemon-affection',
+            'kitchen-tea-lemon-affection',
+        ], true);
 
-        DB::transaction(function () use ($event, $preset, $themeKey): void {
+        DB::transaction(function () use ($event, $preset, $themeKey, $isLemonAffection): void {
             $event->theme()->updateOrCreate([], [
                 'template_key' => $themeKey,
                 'background_color' => $preset['backgroundColor'],
@@ -39,10 +43,10 @@ class ApplyEventTheme
                 'banner_path' => null,
                 'banner_position' => 'center',
                 'background_path' => null,
-                'background_fill' => 'cover',
-                'background_position' => 'center',
+                'background_fill' => $isLemonAffection ? 'repeat' : 'cover',
+                'background_position' => $isLemonAffection ? 'top' : 'center',
                 'background_overlay' => 'light',
-                'background_overlay_opacity' => 20,
+                'background_overlay_opacity' => $isLemonAffection ? 50 : 20,
             ]);
         });
 

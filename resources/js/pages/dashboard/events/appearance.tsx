@@ -20,7 +20,7 @@ import { CelebreLogo } from '@/components/celebre-logo';
 import InputError from '@/components/input-error';
 import ThemePreview from '@/components/theme-preview';
 import { UnsavedChangesGuard } from '@/components/unsaved-changes-guard';
-import { fontStack } from '@/lib/event-theme';
+import { fontStack, themeAssets } from '@/lib/event-theme';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -130,6 +130,7 @@ export default function EventAppearance({
     };
     creationFlow?: boolean;
 }) {
+    const defaultThemeAssets = themeAssets(event.theme.templateKey);
     const form = useForm<AppearanceFormData>({
         background_color: event.theme.backgroundColor,
         surface_color: event.theme.surfaceColor,
@@ -143,10 +144,21 @@ export default function EventAppearance({
         banner_position: event.theme.bannerPosition,
         remove_banner: false,
         background: null,
-        background_fill: event.theme.backgroundFill,
-        background_position: event.theme.backgroundPosition,
-        background_overlay: event.theme.backgroundOverlay,
-        background_overlay_opacity: event.theme.backgroundOverlayOpacity,
+        background_fill: event.theme.backgroundUrl
+            ? event.theme.backgroundFill
+            : (defaultThemeAssets.backgroundFill ?? event.theme.backgroundFill),
+        background_position: event.theme.backgroundUrl
+            ? event.theme.backgroundPosition
+            : (defaultThemeAssets.backgroundPosition ??
+              event.theme.backgroundPosition),
+        background_overlay: event.theme.backgroundUrl
+            ? event.theme.backgroundOverlay
+            : (defaultThemeAssets.backgroundOverlay ??
+              event.theme.backgroundOverlay),
+        background_overlay_opacity: event.theme.backgroundUrl
+            ? event.theme.backgroundOverlayOpacity
+            : (defaultThemeAssets.backgroundOverlayOpacity ??
+              event.theme.backgroundOverlayOpacity),
         remove_background: false,
         sections: event.sections,
         palette_items: event.paletteItems.map((item) => ({
@@ -1144,10 +1156,8 @@ export default function EventAppearance({
                                 : `Aplicar ${pendingTheme?.name}?`}
                         </DialogTitle>
                         <DialogDescription>
-                            Cores, tipografia, composição, cartões, botões,
-                            banner e imagem de fundo serão substituídos pelos
-                            padrões do tema. Informações do evento, presentes,
-                            convidados, reservas e a visibilidade/ordem das
+                            Cores, tipografia, composição, cartões e botões
+                            serão substituídos pelos padrões do tema.
                             seções não serão alterados.
                         </DialogDescription>
                     </DialogHeader>

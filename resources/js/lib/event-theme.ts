@@ -3,6 +3,46 @@ import type { EventTheme, EventThemeOption } from '@/types';
 
 type VisualTheme = EventTheme | EventThemeOption;
 
+export type EventThemeAssets = {
+    backgroundUrl?: string;
+    postCoverBackgroundUrl?: string;
+    backgroundFill?: 'cover' | 'repeat';
+    backgroundPosition?: 'top' | 'center' | 'bottom' | 'left' | 'right';
+    backgroundOverlay?: 'light' | 'dark';
+    backgroundOverlayOpacity?: number;
+    coverFrameUrl?: string;
+    coverIllustrationUrl?: string;
+    titleColor?: string;
+};
+
+const themeAssetsByKey: Record<string, EventThemeAssets> = {
+    'housewarming-lemon-affection': {
+        backgroundUrl: '/images/themes/lemon-affection/sicilia-background.png',
+        postCoverBackgroundUrl: '/images/themes/lemon-affection/checkered_blue.png',
+        backgroundFill: 'repeat',
+        backgroundPosition: 'top',
+        backgroundOverlay: 'light',
+        backgroundOverlayOpacity: 50,
+        coverFrameUrl: '/images/themes/lemon-affection/checkered_blue.png',
+        coverIllustrationUrl: '/images/themes/lemon-affection/apron.png',
+        titleColor: '#527D86',
+    },
+    'kitchen-tea-lemon-affection': {
+        backgroundUrl: '/images/themes/lemon-affection/sicilia-background.png',
+        postCoverBackgroundUrl: '/images/themes/lemon-affection/checkered_blue.png',
+        backgroundFill: 'repeat',
+        backgroundPosition: 'top',
+        backgroundOverlay: 'light',
+        backgroundOverlayOpacity: 50,
+        coverFrameUrl: '/images/themes/lemon-affection/checkered_blue.png',
+        coverIllustrationUrl: '/images/themes/lemon-affection/apron.png',
+        titleColor: '#527D86',
+    },
+};
+
+export const themeAssets = (themeKey: string): EventThemeAssets =>
+    themeAssetsByKey[themeKey] ?? {};
+
 export const fontStack = (fontPair: string) => {
     const stacks: Record<string, string> = {
         classic: 'Georgia, Cambria, "Times New Roman", serif',
